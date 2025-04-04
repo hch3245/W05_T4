@@ -283,6 +283,32 @@ struct FLighting
 	float pad5; // 16바이트 정렬 맞춤 추가 패딩
 };
 
+namespace Light
+{
+    enum Type
+    {
+        Directional,
+        Point,
+        Spot
+    };
+}
+
+struct FLightConstants
+{
+    FVector4 Color;
+    
+    FVector Position;
+    float Radius;
+
+    FVector Direction;
+    float SpotAngle;
+
+    float Intensity;
+    int32 Type;
+    float pad0;
+    float pad1;
+};
+
 struct FMaterialConstants {
     FVector DiffuseColor;
     float TransparencyScalar;
@@ -323,3 +349,4 @@ struct FSubUVConstant
     float indexU;
     float indexV;
 };
+

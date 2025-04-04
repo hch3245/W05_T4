@@ -11,8 +11,10 @@ public:
     ULightComponentBase();
     virtual ~ULightComponentBase() override;
 
+    virtual void InitializeComponent() override;
     virtual void TickComponent(float DeltaTime) override;
     virtual int CheckRayIntersection(FVector& rayOrigin, FVector& rayDirection, float& pfNearHitDistance);
+    virtual void FillLightConstant(FLightConstants& outConstant);
     void InitializeLight();
     void SetColor(FVector4 newColor);
     FVector4 GetColor() const;
@@ -21,6 +23,8 @@ public:
 
 private:
     FVector4 color;
+    float Intensity;
+    int32 Type;
     float radius;
     FBoundingBox AABB;
     UBillboardComponent* texture2D;

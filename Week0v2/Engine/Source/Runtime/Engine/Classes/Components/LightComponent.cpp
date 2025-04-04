@@ -45,6 +45,11 @@ void ULightComponentBase::InitializeLight()
     radius = 5;
 }
 
+void ULightComponentBase::InitializeComponent()
+{
+    Super::InitializeComponent();
+}
+
 void ULightComponentBase::TickComponent(float DeltaTime)
 {
     Super::TickComponent(DeltaTime);
@@ -58,5 +63,11 @@ int ULightComponentBase::CheckRayIntersection(FVector& rayOrigin, FVector& rayDi
 {
     bool res =AABB.Intersect(rayOrigin, rayDirection, pfNearHitDistance);
     return res;
+}
+
+void ULightComponentBase::FillLightConstant(FLightConstants& outConstant)
+{
+    outConstant.Color = color;
+    outConstant.Intensity = Intensity;
 }
 
