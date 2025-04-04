@@ -130,6 +130,7 @@ void AEditorPlayer::Input()
 			{
 				// SelectedComponent가 RootComponent가 아닌 경우
 				PickedComponent->DestroyComponent();
+				World->SetPickedComponent(nullptr);
 			}
 			else 
 			{
