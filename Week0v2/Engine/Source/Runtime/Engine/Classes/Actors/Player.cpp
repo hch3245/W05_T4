@@ -120,10 +120,24 @@ void AEditorPlayer::Input()
     if (GetAsyncKeyState(VK_DELETE) & 0x8000)
     {
         UWorld* World = GetWorld();
-        if (AActor* PickedActor = World->GetSelectedActor())
+		AActor* PickedActor = World->GetSelectedActor();
+		USceneComponent* PickedComponent = World->GetSelectedComponent();
+
+        if (PickedActor && PickedComponent)
         {
-            World->DestroyActor(PickedActor);
-            World->SetPickedActor(nullptr);
+			
+			if (PickedActor->GetRootComponent() != PickedComponent)
+			{
+				// SelectedComponent가 RootComponent가 아닌 경우
+				PickedComponent->DestroyComponent();
+			}
+			else 
+			{
+				// SelectedComponent가 RootComponent인 경우
+				World->DestroyActor(PickedActor);
+				World->SetPickedActor(nullptr);
+				World->SetPickedComponent(nullptr);
+			}
         }
     }
 }
@@ -261,6 +275,15 @@ void AEditorPlayer::PickActor(const FVector& pickPosition)
     if (Possible)
     {
         GetWorld()->SetPickedActor(Possible->GetOwner());
+        if (Possible->IsA<USceneComponent>()) 
+        {
+            USceneComponent* ScenePossible = Cast<USceneComponent>(Possible);
+            GetWorld()->SetPickedComponent(ScenePossible);
+        }
+        else 
+        {
+            GetWorld()->SetPickedComponent(nullptr);
+        }
     }
 }
 
@@ -359,18 +382,19 @@ void AEditorPlayer::PickedObjControl()
 
         // USceneComponent* pObj = GetWorld()->GetPickingObj();
         AActor* PickedActor = GetWorld()->GetSelectedActor();
+		USceneComponent* PickedComponent = GetWorld()->GetSelectedComponent();
         UGizmoBaseComponent* Gizmo = static_cast<UGizmoBaseComponent*>(GetWorld()->GetPickingGizmo());
         switch (cMode)
         {
         case CM_TRANSLATION:
-            ControlTranslation(PickedActor->GetRootComponent(), Gizmo, deltaX, deltaY);
+            ControlTranslation(PickedComponent, Gizmo, deltaX, deltaY);
             break;
         case CM_SCALE:
-            ControlScale(PickedActor->GetRootComponent(), Gizmo, deltaX, deltaY);
+            ControlScale(PickedComponent, Gizmo, deltaX, deltaY);
 
             break;
         case CM_ROTATION:
-            ControlRotation(PickedActor->GetRootComponent(), Gizmo, deltaX, deltaY);
+            ControlRotation(PickedComponent, Gizmo, deltaX, deltaY);
             break;
         default:
             break;
