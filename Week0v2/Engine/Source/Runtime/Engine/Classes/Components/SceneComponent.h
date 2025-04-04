@@ -22,6 +22,8 @@ public:
     void AddRotation(FVector _added);
     void AddScale(FVector _added);
 
+    void DestroyComponent() override;
+
 protected:
     FVector RelativeLocation;
     FVector RelativeRotation;
