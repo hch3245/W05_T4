@@ -77,6 +77,15 @@ void USceneComponent::AddScale(FVector _added)
 
 }
 
+void USceneComponent::DestroyComponent()
+{
+    for (USceneComponent* Child : AttachChildren)
+    {
+        Child->DestroyComponent();
+    }
+    Super::DestroyComponent();
+}
+
 FVector USceneComponent::GetWorldRotation()
 {
 	if (AttachParent)
