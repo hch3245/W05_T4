@@ -175,6 +175,10 @@ void FGraphicsDevice::ReleaseDeviceAndSwapChain()
 void FGraphicsDevice::CreateFrameBuffer()
 {
     // 스왑 체인으로부터 백 버퍼 텍스처 가져오기
+    // 스왑 체인의 백 버퍼(0번 버퍼)를 가져오는 과정.
+    // 이걸 기반으로 색상 렌더 타겟 뷰를 생성해서 렌더 타겟으로 사용.
+    // sRGB폼새을 지정한 이유는 톤 매핑이나 감마 보정이 포함된 출력이 필요할 때 사용. 특히 후처리
+    // FOg, Bloom  등) 에서 정확한 색상 표현을 원하면 sRGB 써야 함.
     SwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (void**)&FrameBuffer);
 
     // 렌더 타겟 뷰 생성
@@ -202,8 +206,28 @@ void FGraphicsDevice::CreateFrameBuffer()
 
     Device->CreateRenderTargetView(UUIDFrameBuffer, &UUIDFrameBufferRTVDesc, &UUIDFrameBufferRTV);
 
+    D3D11_TEXTURE2D_DESC postprocessDesc = {};
+    postprocessDesc.Width = screenWidth;
+    postprocessDesc.Height = screenHeight;
+    postprocessDesc.MipLevels = 1;
+    postprocessDesc.ArraySize = 1;
+    postprocessDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+    postprocessDesc.SampleDesc.Count = 1;
+    postprocessDesc.Usage = D3D11_USAGE_DEFAULT;
+    postprocessDesc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
+
+
+    Device->CreateTexture2D(&postprocessDesc, nullptr, &PostProcessFrameBuffer);
+    D3D11_RENDER_TARGET_VIEW_DESC postprocessRTVDesc = {};
+    postprocessRTVDesc.Format = postprocessDesc.Format;
+    postprocessRTVDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
+    postprocessRTVDesc.Texture2D.MipSlice = 0;
+
+    Device->CreateRenderTargetView(PostProcessFrameBuffer, &postprocessRTVDesc, &PostProcessRTV);
+    
     RTVs[0] = FrameBufferRTV;
     RTVs[1] = UUIDFrameBufferRTV;
+    RTVs[2] = PostProcessRTV;
 }
 
 void FGraphicsDevice::ReleaseFrameBuffer()

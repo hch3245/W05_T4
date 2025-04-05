@@ -95,18 +95,28 @@ void FRenderer::ReleaseShader()
 // Prepare
 void FRenderer::PrepareShader() const
 {
+    // 정점 셰이더 바인딩.
     Graphics->DeviceContext->VSSetShader(VertexShader, nullptr, 0);
+    // 픽셀 셰이더 바인딩.
     Graphics->DeviceContext->PSSetShader(PixelShader, nullptr, 0);
+    // Vertex Buffer 데이터 포맷에 맞는 Input Layout 설정.
     Graphics->DeviceContext->IASetInputLayout(InputLayout);
 
     if (ConstantBuffer)
     {
+        // b0 slot 바인딩
         Graphics->DeviceContext->VSSetConstantBuffers(0, 1, &ConstantBuffer);
         Graphics->DeviceContext->PSSetConstantBuffers(0, 1, &ConstantBuffer);
+        
+        // 머티리얼 Cbuffer 픽셀 셰이더 b1 slot 바인딩
         Graphics->DeviceContext->PSSetConstantBuffers(1, 1, &MaterialConstantBuffer);
+        // 라이트 Cbuffer 픽셀 세이더 b2 slot 바인딩
         Graphics->DeviceContext->PSSetConstantBuffers(2, 1, &LightingBuffer);
+        // Lit/Unlit flag 관련 b3 slot 바인딩
         Graphics->DeviceContext->PSSetConstantBuffers(3, 1, &FlagBuffer);
+        // 서브 메시 선택 여부 Cbuffer b3 바인딩.
         Graphics->DeviceContext->PSSetConstantBuffers(4, 1, &SubMeshConstantBuffer);
+        // 텍스처 Cbuffer  b5 slot 바인딩.
         Graphics->DeviceContext->PSSetConstantBuffers(5, 1, &TextureConstantBufer);
     }
 }
@@ -627,6 +637,51 @@ ID3D11ShaderResourceView* FRenderer::CreateConeSRV(ID3D11Buffer* pConeBuffer, UI
     Graphics->Device->CreateShaderResourceView(pConeBuffer, &srvDesc, &pConeSRV);
     return pConeSRV;
 }
+
+ID3D11ShaderResourceView* FRenderer::CreateSceneColorSRV(ID3D11Texture2D* FrameBuffer)
+{
+    // SceneColor용 SRV 생성
+    // 각 필드는 SRV의 구체적이 구조와 역할을 정의.
+    D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+    // Format : 텍스처의 픽셀 포맷을 지정. 여기선 sRGB 감마 보정이 포함된 8비트 BGRA포맷을 의미.
+    // 후처리에서 색 공간 정확도가 중요할 때 sRGB를 써.
+    srvDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB;
+    // SRV가 어떤 종류의 자원인지 정의함. 여기선 2D 텍스처(TEXTURE2D)
+    // 만약에 텍스처 배열이면 D3D11_SRV_DIMENSION_TEXTURE2DArray 를 써야 하고,
+    // 버퍼면 D3D11_SRV_DIMENSION_BUFFER 사용.
+    srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+    // 접근할 수 있는 MipLevel 수 , 보통 1dlaus mipmapping 안 씀.
+    srvDesc.Texture2D.MipLevels = 1;
+    
+    // FrameBuffer : 화면에 렌더링할 백버퍼.
+    // Graphics->FrameBuffer는 CreateFrameBuffer()에서 초기화.
+    
+    // 렌더 타겟으로 사용되었던 프레임 버퍼를 픽셀 셰이더가 읽을 수 있도록 SRV로 변환.
+    // 후처리 렌더 패스의 핵심.
+    Graphics->Device->CreateShaderResourceView(FrameBuffer, &srvDesc, &pSceneSRV);
+    return pSceneSRV;
+}
+
+ID3D11ShaderResourceView* FRenderer::CreateDepthSRV(ID3D11Texture2D* pDepthStencilBuffer)
+{
+    D3D11_SHADER_RESOURCE_VIEW_DESC depthSRVDesc = {};
+
+    // 깊이 버퍼 포맷인데 SRV로 만들기 위해서는 타입리스 포맷으로 지정해야함.
+    /*
+    * R24_UNORM : 깊이 값 0.0~1.0 을 24비트로 저장하는 포맷(Depth Buffer의 실제 데이터)
+    * x8_TYPELESS : 마지막 8비트는 스텐실이지만, 여기선 사용 안 하므로 X로 처리
+    * TYPELESS : DXGI가 이 SRV에서 어떤 포맷으로 읽을지는 나중에 정의함.
+    * (예 : R24_UNORM_X8_TYPELESS 로 SRV 접근 가능) 
+    */
+    depthSRVDesc.Format = DXGI_FORMAT_R24_UNORM_X8_TYPELESS;
+    depthSRVDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+    depthSRVDesc.Texture2D.MipLevels = 1;
+    
+    Graphics->Device->CreateShaderResourceView(pDepthStencilBuffer, &depthSRVDesc, &pDepthSRV);
+    return pDepthSRV;
+}
+
+
 
 void FRenderer::UpdateBoundingBoxBuffer(ID3D11Buffer* pBoundingBoxBuffer, const TArray<FBoundingBox>& BoundingBoxes, int numBoundingBoxes) const
 {

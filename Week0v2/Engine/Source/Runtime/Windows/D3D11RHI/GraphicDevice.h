@@ -4,6 +4,8 @@
 #pragma comment(lib, "d3dcompiler")
 
 #define _TCHAR_DEFINED
+
+#define RTV_NUM 3
 #include <d3d11.h>
 
 #include "EngineBaseTypes.h"
@@ -18,9 +20,11 @@ public:
     IDXGISwapChain* SwapChain = nullptr;
     ID3D11Texture2D* FrameBuffer = nullptr;
     ID3D11Texture2D* UUIDFrameBuffer = nullptr;
-    ID3D11RenderTargetView* RTVs[2];
+    ID3D11Texture2D* PostProcessFrameBuffer = nullptr;
+    ID3D11RenderTargetView* RTVs[RTV_NUM];
     ID3D11RenderTargetView* FrameBufferRTV = nullptr;
     ID3D11RenderTargetView* UUIDFrameBufferRTV = nullptr;
+    ID3D11RenderTargetView* PostProcessRTV = nullptr;
     ID3D11RasterizerState* RasterizerStateSOLID = nullptr;
     ID3D11RasterizerState* RasterizerStateWIREFRAME = nullptr;
     DXGI_SWAP_CHAIN_DESC SwapchainDesc;
