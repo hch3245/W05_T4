@@ -136,6 +136,19 @@ public:
     ID3D11ShaderResourceView* pConeSRV = nullptr;
     ID3D11ShaderResourceView* pOBBSRV = nullptr;
 
+    // Depth 렌더링을 위한 리소스 및 함수
+public:
+    ID3D11VertexShader* DepthVisualizationVS = nullptr;
+    ID3D11PixelShader* DepthVisualizationPS = nullptr;
+    ID3D11InputLayout* QuadInputLayout = nullptr;
+    ID3D11Buffer* QuadVertexBuffer = nullptr;
+    ID3D11SamplerState* LinearSampler = nullptr;
+private:
+    void CreateDepthVisualizationResources();
+    void ReleaseDepthVisualizationResources();
+    void PrepareDepthVisualization();
+    void RenderDepthVisualization();
+
 
 public:
     FRenderResourceManager& GetResourceManager() { return RenderResourceManager; }
