@@ -36,7 +36,6 @@ void FRenderer::Initialize(FGraphicsDevice* graphics)
 
     CreateSceneColorSRV();
     CreatePositionSRV();
-    CreateDepthSRV();
 }
 
 void FRenderer::Release()
@@ -892,24 +891,6 @@ ID3D11ShaderResourceView* FRenderer::CreatePositionSRV()
     return pPositionSRV;
 }
 
-ID3D11ShaderResourceView* FRenderer::CreateDepthSRV()
-{
-    D3D11_SHADER_RESOURCE_VIEW_DESC depthSRVDesc = {};
-
-    // 깊이 버퍼 포맷인데 SRV로 만들기 위해서는 타입리스 포맷으로 지정해야함.
-    /*
-    * R24_UNORM : 깊이 값 0.0~1.0 을 24비트로 저장하는 포맷(Depth Buffer의 실제 데이터)
-    * x8_TYPELESS : 마지막 8비트는 스텐실이지만, 여기선 사용 안 하므로 X로 처리
-    * TYPELESS : DXGI가 이 SRV에서 어떤 포맷으로 읽을지는 나중에 정의함.
-    * (예 : R24_UNORM_X8_TYPELESS 로 SRV 접근 가능) 
-    */
-    depthSRVDesc.Format = DXGI_FORMAT_R24_UNORM_X8_TYPELESS;
-    depthSRVDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
-    depthSRVDesc.Texture2D.MipLevels = 1;
-
-    /*Graphics->Device->CreateShaderResourceView(Graphics->pDepthStencilBuffer, &depthSRVDesc, &pDepthSRV);*/
-    return pDepthSRV;
-}
 
 
 
