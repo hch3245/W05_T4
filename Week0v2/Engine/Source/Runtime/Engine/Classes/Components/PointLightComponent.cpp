@@ -20,12 +20,8 @@ void UPointLightComponent::TickComponent(float DeltaTime)
 
 void UPointLightComponent::FillLightConstant(FLightConstants& outConstant)
 {
-    const FMatrix& Model = JungleMath::CreateModelMatrix(
-        GetWorldLocation(),
-        GetWorldRotation(),
-        GetWorldScale()
-    );
-    outConstant.Position = FMatrix::TransformVector(Position,Model);
+    const FMatrix& M = GetWorldTransform();
+    outConstant.Position = FMatrix::TransformVector(Position,M);
     outConstant.Radius = Radius;
     outConstant.Type = type;
     Super::FillLightConstant(outConstant);

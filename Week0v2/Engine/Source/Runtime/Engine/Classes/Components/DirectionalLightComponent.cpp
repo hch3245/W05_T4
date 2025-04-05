@@ -20,12 +20,8 @@ void UDirectionalLightComponent::TickComponent(float DeltaTime)
 
 void UDirectionalLightComponent::FillLightConstant(FLightConstants& outConstant)
 {
-    const FMatrix& Model = JungleMath::CreateModelMatrix(
-        GetWorldLocation(),
-        GetWorldRotation(),
-        GetWorldScale()
-    );
-    outConstant.Direction = FMatrix::TransformVector(Direction,Model);
+    const FMatrix& M = GetWorldTransform();
+    outConstant.Direction = FMatrix::TransformVector(Direction,M);
     outConstant.Type = type;
     Super::FillLightConstant(outConstant);
 }

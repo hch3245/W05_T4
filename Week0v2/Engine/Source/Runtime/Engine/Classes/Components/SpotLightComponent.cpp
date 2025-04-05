@@ -20,13 +20,10 @@ void USpotLightComponent::TickComponent(float DeltaTime)
 
 void USpotLightComponent::FillLightConstant(FLightConstants& outConstant)
 {
-    const FMatrix& Model = JungleMath::CreateModelMatrix(
-        GetWorldLocation(),
-        GetWorldRotation(),
-        GetWorldScale()
-    );
-    outConstant.Position = FMatrix::TransformVector(Position, Model);
-    outConstant.Direction = FMatrix::TransformVector(Direction, Model);
+    const FMatrix& M = GetWorldTransform();
+    const FQuat& Q = GetWorldQuaternion();
+    outConstant.Position = FMatrix::TransformVector(Position, M);
+    outConstant.Direction = FMatrix::TransformVector(Direction, M);
     outConstant.Radius = Radius;
     outConstant.SpotAngle = Angles;
     outConstant.Type = type;
