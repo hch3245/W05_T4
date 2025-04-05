@@ -80,6 +80,7 @@ public:
     USceneComponent* GetPickingGizmo() const { return pickingGizmo; }
     void SetPickingGizmo(UObject* Object);
 
+    UFogComponent* GetFogComponent() const { return FogComponent; }
     // 임시
     bool IsPIEWorld() const;
     void BeginPlay();

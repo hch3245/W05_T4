@@ -32,6 +32,7 @@ void FRenderer::Initialize(FGraphicsDevice* graphics)
     CreateShader();
     CreateConstantBuffer();
     CreateDepthVisualizationResources(); // 깊이 시각화 리소스 생성
+    CreateFogResources();
     ConstantBufferUpdater.UpdateLitUnlitConstant(FlagBuffer, 1);
 
     CreateSceneColorSRV();
@@ -43,6 +44,7 @@ void FRenderer::Release()
     ReleaseShader();
     ReleaseConstantBuffer();
     ReleaseDepthVisualizationResources(); // 깊이 시각화 리소스 해제
+    ReleaseFogResources();
 }
 
 #pragma region Shader
@@ -179,6 +181,7 @@ void FRenderer::CreateConstantBuffer()
     TextureConstantBufer = RenderResourceManager.CreateConstantBuffer(sizeof(FTextureConstants));
     LightingBuffer = RenderResourceManager.CreateConstantBuffer(sizeof(FLighting));
     FlagBuffer = RenderResourceManager.CreateConstantBuffer(sizeof(FLitUnlitConstants));
+    FogConstantBuffer = RenderResourceManager.CreateConstantBuffer(sizeof(FFogConstants));
 }
 
 void FRenderer::ReleaseConstantBuffer()
@@ -192,6 +195,7 @@ void FRenderer::ReleaseConstantBuffer()
     RenderResourceManager.ReleaseBuffer(TextureConstantBufer);
     RenderResourceManager.ReleaseBuffer(LightingBuffer);
     RenderResourceManager.ReleaseBuffer(FlagBuffer);
+    RenderResourceManager.ReleaseBuffer(FogConstantBuffer);
 }
 #pragma endregion ConstantBuffer
 
@@ -280,6 +284,8 @@ void FRenderer::Render(UWorld* World, std::shared_ptr<FEditorViewportClient> Act
         RenderDepthVisualization();
     }
 
+    RenderFogVisualization();
+    
     ClearRenderArr();
 }
 
@@ -692,6 +698,77 @@ void FRenderer::CreateDepthVisualizationResources()
     }
 }
 
+void FRenderer::CreateFogResources()
+{
+    HRESULT hr;
+    ID3DBlob* VSBlob = nullptr; // VS Blob을 받을 변수
+    ID3DBlob* PSBlob = nullptr; // PS Blob을 받을 변수
+    ID3DBlob* ErrorBlob = nullptr; // 에러 Blob을 받을 변수
+    hr = D3DCompileFromFile(L"Shaders/FogPS.hlsl", nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE,
+        "mainPS", "vs_5_0", D3DCOMPILE_ENABLE_STRICTNESS | D3DCOMPILE_DEBUG, 0, &PSBlob, &ErrorBlob);
+    if (FAILED(hr)) {
+        if (ErrorBlob) {
+            UE_LOG(LogLevel::Error, "PS Compile Error: %s", (char*)ErrorBlob->GetBufferPointer());
+            ErrorBlob->Release();
+        }
+        else
+        {
+            UE_LOG(LogLevel::Error, "Failed to compile depth PS! File not found?");
+        }
+
+        hr = Graphics->Device->CreatePixelShader(PSBlob->GetBufferPointer(), PSBlob->GetBufferSize(), nullptr, &FogPS);
+        PSBlob->Release(); // PS Blob은 더 이상 필요 없음
+        if (FAILED(hr))
+        {
+            UE_LOG(LogLevel::Error, "Failed to create depth visualization pixel shader");
+            return;
+        }
+    }
+}
+
+void FRenderer::ReleaseFogResources()
+{
+    if (FogPS) {
+        FogPS->Release();
+        FogPS = nullptr;
+    }
+}
+
+void FRenderer::PrepareFogVisualization()
+{
+    UINT Stride = sizeof(FVertexTexture);
+    UINT Offset = 0;
+    Graphics->DeviceContext->IASetInputLayout(QuadInputLayout);
+    Graphics->DeviceContext->IASetVertexBuffers(0, 1, &QuadVertexBuffer, &Stride, &Offset);
+    Graphics->DeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+
+
+    Graphics->DeviceContext->PSSetShader(FogPS, nullptr, 0);
+    Graphics->DeviceContext->PSSetSamplers(0, 1, &LinearSampler);
+    Graphics->DeviceContext->PSSetShaderResources(0, 1, &pSceneSRV);
+    Graphics->DeviceContext->PSSetShaderResources(1, 1, &pPositionSRV);
+
+    Graphics->DeviceContext->OMSetRenderTargets(1, &Graphics->FrameBufferRTV, nullptr);
+    Graphics->DeviceContext->OMSetBlendState(nullptr, nullptr, 0xFFFFFFFF);
+}
+
+void FRenderer::RenderFogVisualization()
+{
+    UFogComponent* Fog = GEngine->GetWorld()->GetFogComponent();
+    if (Fog) {
+        ConstantBufferUpdater.UpdateFogConstant(FogConstantBuffer, GEngine->GetWorld()->GetFogComponent()->curFogConstant);
+    }
+    
+    PrepareFogVisualization();
+    Graphics->DeviceContext->Draw(4, 0);
+
+    ID3D11ShaderResourceView* nullSRV[1] = { nullptr };
+    // FIXME : 사용 slot 확인후 해제해주기
+    //Graphics -> DeviceContext -> PSSetShaderResources(0, 1, )
+    // TODO : 빼도되는지 확인하기
+    Graphics->DeviceContext->OMSetRenderTargets(RTV_NUM, Graphics->RTVs, Graphics->DepthStencilView);
+}
+
 void FRenderer::ReleaseDepthVisualizationResources()
 {
     if (LinearSampler)
@@ -724,7 +801,7 @@ void FRenderer::ReleaseDepthVisualizationResources()
 void FRenderer::PrepareDepthVisualization()
 {
     // 1. Render Target 설정 (GraphicsDevice에 함수를 만들어서 호출)
-    Graphics->DeviceContext->OMSetRenderTargets(2, Graphics->RTVs, nullptr);
+    Graphics->DeviceContext->OMSetRenderTargets(RTV_NUM, Graphics->RTVs, nullptr);
     // 2. Viewport 설정
     //Graphics->DeviceContext->RSSetViewports(1, &ActiveViewport->GetD3DViewport());
 

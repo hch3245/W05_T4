@@ -39,6 +39,7 @@ public:
     ID3D11Buffer* MaterialConstantBuffer = nullptr;
     ID3D11Buffer* SubMeshConstantBuffer = nullptr;
     ID3D11Buffer* TextureConstantBufer = nullptr;
+    ID3D11Buffer* FogConstantBuffer = nullptr;
 
     FLighting lightingData;
 
@@ -150,12 +151,19 @@ public:
     ID3D11InputLayout* QuadInputLayout = nullptr;
     ID3D11Buffer* QuadVertexBuffer = nullptr;
     ID3D11SamplerState* LinearSampler = nullptr;
+
+    ID3D11PixelShader* FogPS = nullptr;
+
 private:
     void CreateDepthVisualizationResources();
     void ReleaseDepthVisualizationResources();
     void PrepareDepthVisualization();
     void RenderDepthVisualization();
 
+    void CreateFogResources();
+    void ReleaseFogResources();
+    void PrepareFogVisualization();
+    void RenderFogVisualization();
 
 public:
     FRenderResourceManager& GetResourceManager() { return RenderResourceManager; }

@@ -16,7 +16,7 @@ public:
     void UpdateSubMeshConstant(ID3D11Buffer* SubMeshConstantBuffer, bool isSelected) const;
     void UpdateTextureConstant(ID3D11Buffer* TextureConstantBufer, float UOffset, float VOffset);
     void UpdateSubUVConstant(ID3D11Buffer* SubUVConstantBuffer, float _indexU, float _indexV) const;
-
+    void UpdateFogConstant(ID3D11Buffer* buffer, FFogConstants* fogConstant) const;
 private:
     ID3D11DeviceContext* DeviceContext = nullptr;
 };
