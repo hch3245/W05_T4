@@ -56,13 +56,14 @@ void UGizmoBaseComponent::TickComponent(float DeltaTime)
 {
     // Super::TickComponent(DeltaTime);
 
-    if (AActor* PickedActor = GetWorld()->GetSelectedActor())
+
+    if (USceneComponent* PickedComponent = GetWorld()->GetSelectedComponent())
     {
         std::shared_ptr<FEditorViewportClient> activeViewport = GetEngine()->GetLevelEditor()->GetActiveViewportClient();
         if (activeViewport->IsPerspective())
         {
             float scaler = abs(
-                (activeViewport->ViewTransformPerspective.GetLocation() - PickedActor->GetRootComponent()->GetLocalLocation()).Magnitude()
+                (activeViewport->ViewTransformPerspective.GetLocation() - PickedComponent->GetLocalLocation()).Magnitude()
             );
             scaler *= 0.1f;
             RelativeScale3D = FVector( scaler,scaler,scaler);

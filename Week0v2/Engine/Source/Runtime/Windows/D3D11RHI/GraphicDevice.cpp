@@ -58,11 +58,11 @@ void FGraphicsDevice::CreateDepthStencilBuffer(HWND hWindow) {
     descDepth.Height = height; // 텍스처 높이 설정
     descDepth.MipLevels = 1; // 미맵 레벨 수 (1로 설정하여 미맵 없음)
     descDepth.ArraySize = 1; // 텍스처 배열의 크기 (1로 단일 텍스처)
-    descDepth.Format = DXGI_FORMAT_D24_UNORM_S8_UINT; // 24비트 깊이와 8비트 스텐실을 위한 포맷
+    descDepth.Format = DXGI_FORMAT_R24G8_TYPELESS; // 24비트 깊이, 8비트 스텐실용 타입리스
     descDepth.SampleDesc.Count = 1; // 멀티샘플링 설정 (1로 단일 샘플)
     descDepth.SampleDesc.Quality = 0; // 샘플 퀄리티 설정
     descDepth.Usage = D3D11_USAGE_DEFAULT; // 텍스처 사용 방식
-    descDepth.BindFlags = D3D11_BIND_DEPTH_STENCIL; // 깊이 스텐실 뷰로 바인딩 설정
+    descDepth.BindFlags = D3D11_BIND_DEPTH_STENCIL | D3D11_BIND_SHADER_RESOURCE; // 깊이 스텐실 뷰로 바인딩 설정
     descDepth.CPUAccessFlags = 0; // CPU 접근 방식 설정
     descDepth.MiscFlags = 0; // 기타 플래그 설정
 
@@ -79,6 +79,7 @@ void FGraphicsDevice::CreateDepthStencilBuffer(HWND hWindow) {
     descDSV.Format = DXGI_FORMAT_D24_UNORM_S8_UINT; // 깊이 스텐실 포맷
     descDSV.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D; // 뷰 타입 설정 (2D 텍스처)
     descDSV.Texture2D.MipSlice = 0; // 사용할 미맵 슬라이스 설정
+    descDSV.Flags = 0; // 읽기 전용 DSV가 아님
 
     hr = Device->CreateDepthStencilView(DepthStencilBuffer, // Depth stencil texture
         &descDSV, // Depth stencil desc
@@ -87,6 +88,23 @@ void FGraphicsDevice::CreateDepthStencilBuffer(HWND hWindow) {
     if (FAILED(hr)) {
         wchar_t errorMsg[256];
         swprintf_s(errorMsg, L"Failed to create depth stencil view! HRESULT: 0x%08X", hr);
+        MessageBox(hWindow, errorMsg, L"Error", MB_ICONERROR | MB_OK);
+        return;
+    }
+
+    // Shader Resource View 설정
+    D3D11_SHADER_RESOURCE_VIEW_DESC descSRV;
+    ZeroMemory(&descSRV, sizeof(descSRV));
+    descSRV.Format = DXGI_FORMAT_R24_UNORM_X8_TYPELESS; // 깊이(24비트 Unsigned Normalized)만 읽고 스텐실(8비트)은 무시
+    descSRV.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+    descSRV.Texture2D.MostDetailedMip = 0;
+    descSRV.Texture2D.MipLevels = 1; // 밉 레벨 1개만 사용
+
+    hr = Device->CreateShaderResourceView(DepthStencilBuffer, &descSRV, &DepthSRV);
+    if (FAILED(hr))
+    {
+        wchar_t errorMsg[256];
+        swprintf_s(errorMsg, L"Failed to create depth shader resource view! HRESULT: 0x%08X", hr);
         MessageBox(hWindow, errorMsg, L"Error", MB_ICONERROR | MB_OK);
         return;
     }
@@ -297,6 +315,12 @@ void FGraphicsDevice::ReleaseDepthStencilResources()
         DepthStateDisable->Release();
         DepthStateDisable = nullptr;
     }
+
+    // 깊이/스텐실 SRV 해제
+    if (DepthSRV) {
+        DepthSRV->Release();
+        DepthSRV = nullptr;
+    }
 }
 
 void FGraphicsDevice::Release() 
@@ -384,9 +408,6 @@ void FGraphicsDevice::OnResize(HWND hWindow) {
 
     CreateFrameBuffer();
     CreateDepthStencilBuffer(hWindow);
-
-
-
 }
 
 
@@ -400,6 +421,7 @@ void FGraphicsDevice::ChangeRasterizer(EViewModeIndex evi)
     case EViewModeIndex::VMI_Lit:
     case EViewModeIndex::VMI_Unlit:
         CurrentRasterizer = RasterizerStateSOLID;
+    case EViewModeIndex::VMI_Depth:
         break;
     }
     DeviceContext->RSSetState(CurrentRasterizer); //레스터 라이저 상태 설정

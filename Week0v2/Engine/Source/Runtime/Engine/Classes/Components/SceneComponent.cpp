@@ -77,6 +77,23 @@ void USceneComponent::AddScale(FVector _added)
 
 }
 
+void USceneComponent::DestroyComponent()
+{
+    // 자식 컴포넌트들 제거
+    TArray<USceneComponent*> attachChildren = AttachChildren;
+    for (USceneComponent* Child : attachChildren)
+    {
+        Child->DestroyComponent();
+    }
+
+    // 부모한테서도 제거
+    if (AttachParent)
+    {
+        AttachParent->AttachChildren.Remove(this);
+    }
+    Super::DestroyComponent();
+}
+
 FVector USceneComponent::GetWorldRotation()
 {
 	if (AttachParent)

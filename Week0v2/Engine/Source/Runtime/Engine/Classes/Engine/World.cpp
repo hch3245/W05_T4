@@ -181,7 +181,7 @@ bool UWorld::DestroyActor(AActor* ThisActor)
         ThisActor->SetOwner(nullptr);
     }
 
-    TSet<UActorComponent*> Components = ThisActor->GetComponents();
+    TArray<UActorComponent*> Components = ThisActor->GetComponents().Array();
     for (UActorComponent* Component : Components)
     {
         Component->DestroyComponent();

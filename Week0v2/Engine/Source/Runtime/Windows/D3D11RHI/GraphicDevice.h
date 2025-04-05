@@ -40,6 +40,10 @@ public:
 
     ID3D11DepthStencilState* DepthStateDisable = nullptr;
 
+    // Depth를 렌더링하기 위해 필요한 리소스 뷰
+    ID3D11ShaderResourceView* DepthSRV = nullptr;
+    
+
     void Initialize(HWND hWindow);
     void CreateDeviceAndSwapChain(HWND hWindow);
     void CreateDepthStencilBuffer(HWND hWindow);
