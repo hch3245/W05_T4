@@ -13,6 +13,8 @@
 #include <Components/CubeComp.h>
 #include <Components/UParticleSubUVComp.h>
 #include "Components/PointLightComponent.h"
+#include "Components/SpotLightComponent.h"
+#include "Components/DirectionalLightComponent.h"
 void PropertyEditorPanel::Render()
 {
     /* Pre Setup */
@@ -116,6 +118,16 @@ void PropertyEditorPanel::Render()
                     UPointLightComponent* PLComp = PickedActor->AddComponent<UPointLightComponent>();
                     PickedComponent = PLComp;
                 }
+                if (ImGui::Selectable("DirectionalLightComponent"))
+                {
+                    UDirectionalLightComponent* DLComp = PickedActor->AddComponent<UDirectionalLightComponent>();
+                    PickedComponent = DLComp;
+                }
+                if (ImGui::Selectable("SpotLightComponent"))
+                {
+                    USpotLightComponent* SLComp = PickedActor->AddComponent<USpotLightComponent>();
+                    PickedComponent = SLComp;
+                }
                 ImGui::EndPopup();
             }
             ImGui::TreePop();
@@ -182,7 +194,7 @@ void PropertyEditorPanel::Render()
     {
         ULightComponentBase* lightObj = Cast<ULightComponentBase>(PickedComponent);
         ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(0.1f, 0.1f, 0.1f, 1.0f));
-        if (ImGui::TreeNodeEx("SpotLight Component", ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_DefaultOpen)) // 트리 노드 생성
+        if (ImGui::TreeNodeEx("LightBase Component", ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_DefaultOpen)) // 트리 노드 생성
         {
             FVector4 currColor = lightObj->GetColor();
 
@@ -194,7 +206,7 @@ void PropertyEditorPanel::Render()
             float lightColor[4] = { r, g, b, a };
 
             // SpotLight Color
-            if (ImGui::ColorPicker4("##SpotLight Color", lightColor,
+            if (ImGui::ColorPicker4("##LightBase Color", lightColor,
                 ImGuiColorEditFlags_DisplayRGB |
                 ImGuiColorEditFlags_NoSidePreview |
                 ImGuiColorEditFlags_NoInputs |
@@ -245,10 +257,10 @@ void PropertyEditorPanel::Render()
             }
 
             // Light Radius
-            float radiusVal = lightObj->GetRadius();
-            if (ImGui::SliderFloat("Radius", &radiusVal, 1.0f, 100.0f))
+            float intensity = lightObj->GetIntensity();
+            if (ImGui::SliderFloat("Intensity", &intensity, 1.0f, 100.0f))
             {
-                lightObj->SetRadius(radiusVal);
+                lightObj->SetIntensity(intensity);
             }
             ImGui::TreePop();
         }

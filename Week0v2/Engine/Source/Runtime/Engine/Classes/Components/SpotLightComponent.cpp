@@ -1,5 +1,5 @@
 #include "SpotLightComponent.h"
-
+#include "Math/JungleMath.h"
 USpotLightComponent::USpotLightComponent()
 {
 }
@@ -20,9 +20,18 @@ void USpotLightComponent::TickComponent(float DeltaTime)
 
 void USpotLightComponent::FillLightConstant(FLightConstants& outConstant)
 {
-    outConstant.Position = Position;
+    const FMatrix& Model = JungleMath::CreateModelMatrix(
+        GetWorldLocation(),
+        GetWorldRotation(),
+        GetWorldScale()
+    );
+    outConstant.Position = FMatrix::TransformVector(Position, Model);
+    outConstant.Direction = FMatrix::TransformVector(Direction, Model);
     outConstant.Radius = Radius;
     outConstant.SpotAngle = Angles;
     outConstant.Type = type;
     Super::FillLightConstant(outConstant);
 }
+
+
+

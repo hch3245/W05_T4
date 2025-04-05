@@ -1,4 +1,12 @@
 #include "DirectionalLightComponent.h"
+#include "Math/JungleMath.h"
+UDirectionalLightComponent::UDirectionalLightComponent() : Direction(-1,-1,-1)
+{
+}
+
+UDirectionalLightComponent::~UDirectionalLightComponent()
+{
+}
 
 void UDirectionalLightComponent::InitializeComponent()
 {
@@ -12,7 +20,12 @@ void UDirectionalLightComponent::TickComponent(float DeltaTime)
 
 void UDirectionalLightComponent::FillLightConstant(FLightConstants& outConstant)
 {
-    outConstant.Direction = Direction;
+    const FMatrix& Model = JungleMath::CreateModelMatrix(
+        GetWorldLocation(),
+        GetWorldRotation(),
+        GetWorldScale()
+    );
+    outConstant.Direction = FMatrix::TransformVector(Direction,Model);
     outConstant.Type = type;
     Super::FillLightConstant(outConstant);
 }

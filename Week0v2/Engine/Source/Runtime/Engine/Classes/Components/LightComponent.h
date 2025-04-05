@@ -20,16 +20,15 @@ public:
     FVector4 GetColor() const;
     float GetRadius() const;
     void SetRadius(float r);
-
+    void SetIntensity(float intensity);
+    float GetIntensity() const;
 private:
     FVector4 color;
     float Intensity=10.0f;
-    float radius=3000.0f;
+    float radius=5.0f;           //SpotLight
     FBoundingBox AABB;
-    UBillboardComponent* texture2D;
 public:
     FBoundingBox GetBoundingBox() const {return AABB;}
     float GetRadius() {return radius;}
     FVector4 GetColor() {return color;}
-    UBillboardComponent* GetTexture2D() const {return texture2D;}
 };
