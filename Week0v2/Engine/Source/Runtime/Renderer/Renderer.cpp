@@ -32,6 +32,10 @@ void FRenderer::Initialize(FGraphicsDevice* graphics)
     CreateShader();
     CreateConstantBuffer();
     ConstantBufferUpdater.UpdateLitUnlitConstant(FlagBuffer, 1);
+
+    CreateSceneColorSRV();
+    CreatePositionSRV();
+    CreateDepthSRV();
 }
 
 void FRenderer::Release()
@@ -638,7 +642,7 @@ ID3D11ShaderResourceView* FRenderer::CreateConeSRV(ID3D11Buffer* pConeBuffer, UI
     return pConeSRV;
 }
 
-ID3D11ShaderResourceView* FRenderer::CreateSceneColorSRV(ID3D11Texture2D* FrameBuffer)
+ID3D11ShaderResourceView* FRenderer::CreateSceneColorSRV()
 {
     // SceneColor용 SRV 생성
     // 각 필드는 SRV의 구체적이 구조와 역할을 정의.
@@ -658,17 +662,17 @@ ID3D11ShaderResourceView* FRenderer::CreateSceneColorSRV(ID3D11Texture2D* FrameB
     
     // 렌더 타겟으로 사용되었던 프레임 버퍼를 픽셀 셰이더가 읽을 수 있도록 SRV로 변환.
     // 후처리 렌더 패스의 핵심.
-    Graphics->Device->CreateShaderResourceView(FrameBuffer, &srvDesc, &pSceneSRV);
+    Graphics->Device->CreateShaderResourceView(Graphics->FrameBuffer, &srvDesc, &pSceneSRV);
     return pSceneSRV;
 }
 
-ID3D11ShaderResourceView* FRenderer::CreatePositionSRV(ID3D11Texture2D* pPositionBuffer)
+ID3D11ShaderResourceView* FRenderer::CreatePositionSRV()
 {
-    Graphics->Device->CreateShaderResourceView(pPositionBuffer, nullptr, &pPositionSRV);
+    Graphics->Device->CreateShaderResourceView(Graphics->PositionFrameBuffer, nullptr, &pPositionSRV);
     return pPositionSRV;
 }
 
-ID3D11ShaderResourceView* FRenderer::CreateDepthSRV(ID3D11Texture2D* pDepthStencilBuffer)
+ID3D11ShaderResourceView* FRenderer::CreateDepthSRV()
 {
     D3D11_SHADER_RESOURCE_VIEW_DESC depthSRVDesc = {};
 
@@ -682,8 +686,8 @@ ID3D11ShaderResourceView* FRenderer::CreateDepthSRV(ID3D11Texture2D* pDepthStenc
     depthSRVDesc.Format = DXGI_FORMAT_R24_UNORM_X8_TYPELESS;
     depthSRVDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
     depthSRVDesc.Texture2D.MipLevels = 1;
-    
-    Graphics->Device->CreateShaderResourceView(pDepthStencilBuffer, &depthSRVDesc, &pDepthSRV);
+
+    /*Graphics->Device->CreateShaderResourceView(Graphics->pDepthStencilBuffer, &depthSRVDesc, &pDepthSRV);*/
     return pDepthSRV;
 }
 

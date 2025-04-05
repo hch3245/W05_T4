@@ -188,8 +188,6 @@ void FGraphicsDevice::CreateFrameBuffer()
     framebufferRTVdesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D; // 2D 텍스처
 
     Device->CreateRenderTargetView(FrameBuffer, &framebufferRTVdesc, &FrameBufferRTV);
-    // SRV 도 연결해두기
-    UEditorEngine::renderer.CreateSceneColorSRV(FrameBuffer);
 
 
     D3D11_TEXTURE2D_DESC textureDesc = {};
@@ -230,8 +228,6 @@ void FGraphicsDevice::CreateFrameBuffer()
 
     Device->CreateRenderTargetView(PositionFrameBuffer, &positionRTVDesc, &PositionRTV);
     
-    // SRV 도 연결해두기
-    UEditorEngine::renderer.CreatePositionSRV(PositionFrameBuffer);
     
     RTVs[0] = FrameBufferRTV;
     RTVs[1] = UUIDFrameBufferRTV;

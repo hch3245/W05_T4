@@ -110,9 +110,9 @@ public: // line shader
     ID3D11ShaderResourceView* CreateConeSRV(ID3D11Buffer* pConeBuffer, UINT numCones);
 
     /* PASS 관련 SRV*/
-    ID3D11ShaderResourceView* CreateSceneColorSRV(ID3D11Texture2D* FrameBuffer);
-    ID3D11ShaderResourceView* CreatePositionSRV(ID3D11Texture2D* pPositionBuffer);
-    ID3D11ShaderResourceView* CreateDepthSRV(ID3D11Texture2D* pDepthStencilBuffer);
+    ID3D11ShaderResourceView* CreateSceneColorSRV();
+    ID3D11ShaderResourceView* CreatePositionSRV();
+    ID3D11ShaderResourceView* CreateDepthSRV();
 
     void UpdateBoundingBoxBuffer(ID3D11Buffer* pBoundingBoxBuffer, const TArray<FBoundingBox>& BoundingBoxes, int numBoundingBoxes) const;
     void UpdateOBBBuffer(ID3D11Buffer* pBoundingBoxBuffer, const TArray<FOBB>& BoundingBoxes, int numBoundingBoxes) const;
