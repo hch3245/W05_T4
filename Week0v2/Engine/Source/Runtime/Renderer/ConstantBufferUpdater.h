@@ -16,6 +16,8 @@ public:
     void UpdateSubMeshConstant(ID3D11Buffer* SubMeshConstantBuffer, bool isSelected) const;
     void UpdateTextureConstant(ID3D11Buffer* TextureConstantBufer, float UOffset, float VOffset);
     void UpdateSubUVConstant(ID3D11Buffer* SubUVConstantBuffer, float _indexU, float _indexV) const;
+    void UpdateLightCountConstant(ID3D11Buffer* LightCountBuffer, int LightCount) const;
+    void UpdateModelConstant(ID3D11Buffer* ModelBuffer, const FMatrix& Model) const;
 
 private:
     ID3D11DeviceContext* DeviceContext = nullptr;

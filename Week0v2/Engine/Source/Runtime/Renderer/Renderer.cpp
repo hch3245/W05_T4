@@ -20,7 +20,7 @@
 #include "PropertyEditor/ShowFlags.h"
 #include "UObject/UObjectIterator.h"
 #include "Components/SkySphereComponent.h"
-
+#include "StructuredBuffer.h"
 
 void FRenderer::Initialize(FGraphicsDevice* graphics)
 {
@@ -28,16 +28,22 @@ void FRenderer::Initialize(FGraphicsDevice* graphics)
     RenderResourceManager.Initialize(Graphics->Device);
     ShaderManager.Initialize(Graphics->Device, Graphics->DeviceContext);
     ConstantBufferUpdater.Initialize(Graphics->DeviceContext);
-
+    
     CreateShader();
     CreateConstantBuffer();
     ConstantBufferUpdater.UpdateLitUnlitConstant(FlagBuffer, 1);
+
+    MultiLightStructured = new FStructuredBuffer();
+    MultiLightStructured->Create(Graphics->Device, sizeof(FLightConstants), MAX_MULTILIGHT, false, true, nullptr);
 }
 
 void FRenderer::Release()
 {
     ReleaseShader();
     ReleaseConstantBuffer();
+
+    MultiLightStructured->Release();
+    delete MultiLightStructured;
 }
 
 #pragma region Shader
@@ -108,6 +114,9 @@ void FRenderer::PrepareShader() const
         Graphics->DeviceContext->PSSetConstantBuffers(3, 1, &FlagBuffer);
         Graphics->DeviceContext->PSSetConstantBuffers(4, 1, &SubMeshConstantBuffer);
         Graphics->DeviceContext->PSSetConstantBuffers(5, 1, &TextureConstantBufer);
+        Graphics->DeviceContext->PSSetConstantBuffers(6, 1, &LightCountBuffer);
+        Graphics->DeviceContext->VSSetConstantBuffers(7, 1, &ModelBuffer);
+        MultiLightStructured->BindSRV(Graphics->DeviceContext, 5, SHADER_STAGE_PIXEL);
     }
 }
 
@@ -164,6 +173,8 @@ void FRenderer::CreateConstantBuffer()
     TextureConstantBufer = RenderResourceManager.CreateConstantBuffer(sizeof(FTextureConstants));
     LightingBuffer = RenderResourceManager.CreateConstantBuffer(sizeof(FLighting));
     FlagBuffer = RenderResourceManager.CreateConstantBuffer(sizeof(FLitUnlitConstants));
+    LightCountBuffer = RenderResourceManager.CreateConstantBuffer(sizeof(int32));
+    ModelBuffer = RenderResourceManager.CreateConstantBuffer(sizeof(FMatrix));
 }
 
 void FRenderer::ReleaseConstantBuffer()
@@ -177,6 +188,8 @@ void FRenderer::ReleaseConstantBuffer()
     RenderResourceManager.ReleaseBuffer(TextureConstantBufer);
     RenderResourceManager.ReleaseBuffer(LightingBuffer);
     RenderResourceManager.ReleaseBuffer(FlagBuffer);
+    RenderResourceManager.ReleaseBuffer(LightCountBuffer);
+    RenderResourceManager.ReleaseBuffer(ModelBuffer);
 }
 #pragma endregion ConstantBuffer
 
@@ -248,6 +261,7 @@ void FRenderer::Render(UWorld* World, std::shared_ptr<FEditorViewportClient> Act
     Graphics->ChangeRasterizer(ActiveViewport->GetViewMode());
     ChangeViewMode(ActiveViewport->GetViewMode());
     ConstantBufferUpdater.UpdateLightConstant(LightingBuffer);
+    UpdateMultiLight();
     UPrimitiveBatch::GetInstance().RenderBatch(ConstantBuffer, ActiveViewport->GetViewMatrix(), ActiveViewport->GetProjectionMatrix());
 
     if (ActiveViewport->GetShowFlag() & static_cast<uint64>(EEngineShowFlags::SF_Primitives))
@@ -255,7 +269,7 @@ void FRenderer::Render(UWorld* World, std::shared_ptr<FEditorViewportClient> Act
     RenderGizmos(World, ActiveViewport);
     if (ActiveViewport->GetShowFlag() & static_cast<uint64>(EEngineShowFlags::SF_BillboardText))
         RenderBillboards(World, ActiveViewport);
-    RenderLight(World, ActiveViewport);
+    //RenderLight(World, ActiveViewport);
 
     ClearRenderArr();
 }
@@ -386,6 +400,7 @@ void FRenderer::RenderStaticMeshes(UWorld* World, std::shared_ptr<FEditorViewpor
         // 노말 회전시 필요 행렬
         FMatrix NormalMatrix = FMatrix::Transpose(FMatrix::Inverse(Model));
         FVector4 UUIDColor = StaticMeshComp->EncodeUUID() / 255.0f;
+        ConstantBufferUpdater.UpdateModelConstant(ModelBuffer, Model);
         if (World->GetSelectedActor() == StaticMeshComp->GetOwner())
         {
             ConstantBufferUpdater.UpdateConstant(ConstantBuffer, MVP, NormalMatrix, UUIDColor, true);
@@ -690,4 +705,18 @@ void FRenderer::UpdateLinePrimitveCountBuffer(int numBoundingBoxes, int numCones
     pData->BoundingBoxCount = numBoundingBoxes;
     pData->ConeCount = numCones;
     Graphics->DeviceContext->Unmap(LinePrimitiveBuffer, 0);
+}
+
+void FRenderer::UpdateMultiLight()
+{
+    TArray<FLightConstants> lightConstants;
+    for (auto Light : LightObjs)
+    {
+        FLightConstants lightConstant;
+        Light->FillLightConstant(lightConstant);
+        lightConstants.Add(lightConstant);
+    }
+    MultiLightStructured->Update(Graphics->DeviceContext, lightConstants.GetData(), 
+        sizeof(FLightConstants) * lightConstants.Num());
+    ConstantBufferUpdater.UpdateLightCountConstant(LightCountBuffer, lightConstants.Num());
 }

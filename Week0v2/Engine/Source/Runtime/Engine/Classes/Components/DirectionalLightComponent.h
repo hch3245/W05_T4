@@ -4,6 +4,8 @@ class UDirectionalLightComponent : public ULightComponentBase
 {
     DECLARE_CLASS(UDirectionalLightComponent, ULightComponentBase)
 public:
+    UDirectionalLightComponent();
+    virtual ~UDirectionalLightComponent() override;
     virtual void InitializeComponent() override;
     virtual void TickComponent(float DeltaTime) override;
     virtual void FillLightConstant(FLightConstants& outConstant) override;

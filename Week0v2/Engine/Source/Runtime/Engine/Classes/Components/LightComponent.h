@@ -23,9 +23,8 @@ public:
 
 private:
     FVector4 color;
-    float Intensity;
-    int32 Type;
-    float radius;
+    float Intensity=10.0f;
+    float radius=3000.0f;
     FBoundingBox AABB;
     UBillboardComponent* texture2D;
 public:

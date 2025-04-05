@@ -1,5 +1,13 @@
 #include "SpotLightComponent.h"
 
+USpotLightComponent::USpotLightComponent()
+{
+}
+
+USpotLightComponent::~USpotLightComponent()
+{
+}
+
 void USpotLightComponent::InitializeComponent()
 {
     Super::InitializeComponent();

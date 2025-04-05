@@ -5,12 +5,15 @@ class UPointLightComponent :
 {
     DECLARE_CLASS(UPointLightComponent, ULightComponentBase)
 public:
+    UPointLightComponent();
+    virtual ~UPointLightComponent() override;
     virtual void InitializeComponent() override;
     virtual void TickComponent(float DeltaTime) override;
     virtual void FillLightConstant(FLightConstants& outConstant) override;
 private:
-    FVector Poistion;
+    FVector Position;
     float Radius = 30.0f;
     const Light::Type type = Light::Type::Point;
+public:
 };
 

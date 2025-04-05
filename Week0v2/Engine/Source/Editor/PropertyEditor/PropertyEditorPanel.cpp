@@ -12,7 +12,7 @@
 #include "UObject/ObjectFactory.h"
 #include <Components/CubeComp.h>
 #include <Components/UParticleSubUVComp.h>
-
+#include "Components/PointLightComponent.h"
 void PropertyEditorPanel::Render()
 {
     /* Pre Setup */
@@ -111,7 +111,11 @@ void PropertyEditorPanel::Render()
                     UCubeComp* CubeComponent = PickedActor->AddComponent<UCubeComp>();
                     PickedComponent = CubeComponent;
                 }
-
+                if (ImGui::Selectable("PointLightComponent"))
+                {
+                    UPointLightComponent* PLComp = PickedActor->AddComponent<UPointLightComponent>();
+                    PickedComponent = PLComp;
+                }
                 ImGui::EndPopup();
             }
             ImGui::TreePop();

@@ -287,8 +287,8 @@ namespace Light
 {
     enum Type
     {
-        Directional,
         Point,
+        Directional,
         Spot
     };
 }
@@ -308,6 +308,11 @@ struct FLightConstants
     float pad0;
     float pad1;
 };
+
+#define MAX_MULTILIGHT 64
+#define SHADER_STAGE_VERTEX   (1 << 0)  // 0001
+#define SHADER_STAGE_PIXEL    (1 << 1)  // 0010
+#define SHADER_STAGE_COMPUTE  (1 << 2)  // 0100
 
 struct FMaterialConstants {
     FVector DiffuseColor;

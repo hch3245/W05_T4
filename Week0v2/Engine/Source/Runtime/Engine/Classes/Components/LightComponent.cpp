@@ -41,7 +41,7 @@ void ULightComponentBase::InitializeLight()
     texture2D->InitializeComponent();
     AABB.max = { 1.f,1.f,0.1f };
     AABB.min = { -1.f,-1.f,-0.1f };
-    color = { 1,1,1,1 };
+    color = { 5,0,0,1 };
     radius = 5;
 }
 
