@@ -398,10 +398,10 @@ void FRenderer::RenderStaticMeshes(UWorld* World, std::shared_ptr<FEditorViewpor
         FVector4 UUIDColor = StaticMeshComp->EncodeUUID() / 255.0f;
         if (World->GetSelectedActor() == StaticMeshComp->GetOwner())
         {
-            ConstantBufferUpdater.UpdateConstant(ConstantBuffer, MVP, NormalMatrix, UUIDColor, true);
+            ConstantBufferUpdater.UpdateConstant(ConstantBuffer, Model, MVP, NormalMatrix, UUIDColor, true);
         }
         else
-            ConstantBufferUpdater.UpdateConstant(ConstantBuffer, MVP, NormalMatrix, UUIDColor, false);
+            ConstantBufferUpdater.UpdateConstant(ConstantBuffer, Model, MVP, NormalMatrix, UUIDColor, false);
 
         if (USkySphereComponent* skysphere = Cast<USkySphereComponent>(StaticMeshComp))
         {
@@ -474,9 +474,9 @@ void FRenderer::RenderGizmos(const UWorld* World, const std::shared_ptr<FEditorV
         FMatrix MVP = Model * ActiveViewport->GetViewMatrix() * ActiveViewport->GetProjectionMatrix();
 
         if (GizmoComp == World->GetPickingGizmo())
-            ConstantBufferUpdater.UpdateConstant(ConstantBuffer, MVP, NormalMatrix, UUIDColor, true);
+            ConstantBufferUpdater.UpdateConstant(ConstantBuffer, Model, MVP, NormalMatrix, UUIDColor, true);
         else
-            ConstantBufferUpdater.UpdateConstant(ConstantBuffer, MVP, NormalMatrix, UUIDColor, false);
+            ConstantBufferUpdater.UpdateConstant(ConstantBuffer, Model, MVP, NormalMatrix, UUIDColor, false);
 
         if (!GizmoComp->GetStaticMesh()) continue;
 
@@ -509,9 +509,9 @@ void FRenderer::RenderBillboards(UWorld* World, std::shared_ptr<FEditorViewportC
         FMatrix NormalMatrix = FMatrix::Transpose(FMatrix::Inverse(Model));
         FVector4 UUIDColor = BillboardComp->EncodeUUID() / 255.0f;
         if (BillboardComp == World->GetPickingGizmo())
-            ConstantBufferUpdater.UpdateConstant(ConstantBuffer, MVP, NormalMatrix, UUIDColor, true);
+            ConstantBufferUpdater.UpdateConstant(ConstantBuffer, Model, MVP, NormalMatrix, UUIDColor, true);
         else
-            ConstantBufferUpdater.UpdateConstant(ConstantBuffer, MVP, NormalMatrix, UUIDColor, false);
+            ConstantBufferUpdater.UpdateConstant(ConstantBuffer, Model, MVP, NormalMatrix, UUIDColor, false);
 
         if (UParticleSubUVComp* SubUVParticle = Cast<UParticleSubUVComp>(BillboardComp))
         {
@@ -660,6 +660,12 @@ ID3D11ShaderResourceView* FRenderer::CreateSceneColorSRV(ID3D11Texture2D* FrameB
     // 후처리 렌더 패스의 핵심.
     Graphics->Device->CreateShaderResourceView(FrameBuffer, &srvDesc, &pSceneSRV);
     return pSceneSRV;
+}
+
+ID3D11ShaderResourceView* FRenderer::CreatePositionSRV(ID3D11Texture2D* pPositionBuffer)
+{
+    Graphics->Device->CreateShaderResourceView(pPositionBuffer, nullptr, &pPositionSRV);
+    return pPositionSRV;
 }
 
 ID3D11ShaderResourceView* FRenderer::CreateDepthSRV(ID3D11Texture2D* pDepthStencilBuffer)

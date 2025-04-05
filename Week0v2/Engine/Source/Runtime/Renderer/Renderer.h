@@ -111,6 +111,7 @@ public: // line shader
 
     /* PASS 관련 SRV*/
     ID3D11ShaderResourceView* CreateSceneColorSRV(ID3D11Texture2D* FrameBuffer);
+    ID3D11ShaderResourceView* CreatePositionSRV(ID3D11Texture2D* pPositionBuffer);
     ID3D11ShaderResourceView* CreateDepthSRV(ID3D11Texture2D* pDepthStencilBuffer);
 
     void UpdateBoundingBoxBuffer(ID3D11Buffer* pBoundingBoxBuffer, const TArray<FBoundingBox>& BoundingBoxes, int numBoundingBoxes) const;
@@ -141,6 +142,7 @@ public:
     ID3D11ShaderResourceView* pOBBSRV = nullptr;
     /* FOG 관련 */
     ID3D11ShaderResourceView* pSceneSRV = nullptr;
+    ID3D11ShaderResourceView* pPositionSRV = nullptr;
     ID3D11ShaderResourceView* pDepthSRV = nullptr;
 
 

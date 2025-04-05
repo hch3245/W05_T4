@@ -20,11 +20,11 @@ public:
     IDXGISwapChain* SwapChain = nullptr;
     ID3D11Texture2D* FrameBuffer = nullptr;
     ID3D11Texture2D* UUIDFrameBuffer = nullptr;
-    ID3D11Texture2D* PostProcessFrameBuffer = nullptr;
+    ID3D11Texture2D* PositionFrameBuffer = nullptr;
     ID3D11RenderTargetView* RTVs[RTV_NUM];
     ID3D11RenderTargetView* FrameBufferRTV = nullptr;
     ID3D11RenderTargetView* UUIDFrameBufferRTV = nullptr;
-    ID3D11RenderTargetView* PostProcessRTV = nullptr;
+    ID3D11RenderTargetView* PositionRTV = nullptr;
     ID3D11RasterizerState* RasterizerStateSOLID = nullptr;
     ID3D11RasterizerState* RasterizerStateWIREFRAME = nullptr;
     DXGI_SWAP_CHAIN_DESC SwapchainDesc;

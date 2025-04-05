@@ -1,4 +1,5 @@
 #include "GraphicDevice.h"
+#include "EditorEngine.h"
 #include <wchar.h>
 void FGraphicsDevice::Initialize(HWND hWindow) {
     CreateDeviceAndSwapChain(hWindow);
@@ -187,7 +188,10 @@ void FGraphicsDevice::CreateFrameBuffer()
     framebufferRTVdesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D; // 2D 텍스처
 
     Device->CreateRenderTargetView(FrameBuffer, &framebufferRTVdesc, &FrameBufferRTV);
-    
+    // SRV 도 연결해두기
+    UEditorEngine::renderer.CreateSceneColorSRV(FrameBuffer);
+
+
     D3D11_TEXTURE2D_DESC textureDesc = {};
     textureDesc.Width = screenWidth;
     textureDesc.Height = screenHeight;
@@ -206,28 +210,32 @@ void FGraphicsDevice::CreateFrameBuffer()
 
     Device->CreateRenderTargetView(UUIDFrameBuffer, &UUIDFrameBufferRTVDesc, &UUIDFrameBufferRTV);
 
-    D3D11_TEXTURE2D_DESC postprocessDesc = {};
-    postprocessDesc.Width = screenWidth;
-    postprocessDesc.Height = screenHeight;
-    postprocessDesc.MipLevels = 1;
-    postprocessDesc.ArraySize = 1;
-    postprocessDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
-    postprocessDesc.SampleDesc.Count = 1;
-    postprocessDesc.Usage = D3D11_USAGE_DEFAULT;
-    postprocessDesc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
+    // Position Buffer를 위한 텍스처 생성 (float RGBA)
+    D3D11_TEXTURE2D_DESC posTexDesc = {};
+    posTexDesc.Width = screenWidth;
+    posTexDesc.Height = screenHeight;
+    posTexDesc.MipLevels = 1;
+    posTexDesc.ArraySize = 1;
+    posTexDesc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT; // 32비트 float 4채널
+    posTexDesc.SampleDesc.Count = 1;
+    posTexDesc.Usage = D3D11_USAGE_DEFAULT;
+    posTexDesc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
 
 
-    Device->CreateTexture2D(&postprocessDesc, nullptr, &PostProcessFrameBuffer);
-    D3D11_RENDER_TARGET_VIEW_DESC postprocessRTVDesc = {};
-    postprocessRTVDesc.Format = postprocessDesc.Format;
-    postprocessRTVDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
-    postprocessRTVDesc.Texture2D.MipSlice = 0;
+    Device->CreateTexture2D(&posTexDesc, nullptr, &PositionFrameBuffer);
+    D3D11_RENDER_TARGET_VIEW_DESC positionRTVDesc = {};
+    positionRTVDesc.Format = positionRTVDesc.Format;
+    positionRTVDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
+    positionRTVDesc.Texture2D.MipSlice = 0;
 
-    Device->CreateRenderTargetView(PostProcessFrameBuffer, &postprocessRTVDesc, &PostProcessRTV);
+    Device->CreateRenderTargetView(PositionFrameBuffer, &positionRTVDesc, &PositionRTV);
+    
+    // SRV 도 연결해두기
+    UEditorEngine::renderer.CreatePositionSRV(PositionFrameBuffer);
     
     RTVs[0] = FrameBufferRTV;
     RTVs[1] = UUIDFrameBufferRTV;
-    RTVs[2] = PostProcessRTV;
+    RTVs[2] = PositionRTV;
 }
 
 void FGraphicsDevice::ReleaseFrameBuffer()
@@ -312,6 +320,7 @@ void FGraphicsDevice::Prepare()
 {
     DeviceContext->ClearRenderTargetView(FrameBufferRTV, ClearColor); // 렌더 타겟 뷰에 저장된 이전 프레임 데이터를 삭제
     DeviceContext->ClearRenderTargetView(UUIDFrameBufferRTV, ClearColor); // 렌더 타겟 뷰에 저장된 이전 프레임 데이터를 삭제
+    DeviceContext->ClearRenderTargetView(PositionRTV, ClearColor); // 렌더 타겟 뷰에 저장된 이전 프레임 데이터를 삭제
     DeviceContext->ClearDepthStencilView(DepthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0); // 깊이 버퍼 초기화 추가
 
     DeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST); // 정정 연결 방식 설정
@@ -321,7 +330,7 @@ void FGraphicsDevice::Prepare()
 
     DeviceContext->OMSetDepthStencilState(DepthStencilState, 0);
 
-    DeviceContext->OMSetRenderTargets(2, RTVs, DepthStencilView); // 렌더 타겟 설정(백버퍼를 가르킴)
+    DeviceContext->OMSetRenderTargets(RTV_NUM, RTVs, DepthStencilView); // 렌더 타겟 설정(백버퍼를 가르킴)
     DeviceContext->OMSetBlendState(nullptr, nullptr, 0xffffffff); // 블렌뎅 상태 설정, 기본블렌딩 상태임
 }
 
