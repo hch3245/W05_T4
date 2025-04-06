@@ -227,6 +227,14 @@ void FGraphicsDevice::CreateFrameBuffer()
 
     Device->CreateRenderTargetView(ScreenColorBuffer, &screenColorBufferRTVDesc, &ScreenColorBufferRTV);
 
+    // ScreenColorBuffer를 셰이더 리소스 뷰로 사용하기 위한 설정
+    D3D11_SHADER_RESOURCE_VIEW_DESC screenColorBufferSRVDesc = {};
+    screenColorBufferSRVDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB; // sRGB 포맷
+    screenColorBufferSRVDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D; // 2D 텍스처
+    screenColorBufferSRVDesc.Texture2D.MipLevels = 1; // 미밉 레벨 수
+
+    Device->CreateShaderResourceView(ScreenColorBuffer, &screenColorBufferSRVDesc, &pSceneSRV);
+
     D3D11_TEXTURE2D_DESC textureDesc = {};
     textureDesc.Width = screenWidth;
     textureDesc.Height = screenHeight;
@@ -264,7 +272,7 @@ void FGraphicsDevice::CreateFrameBuffer()
     positionRTVDesc.Texture2D.MipSlice = 0;
 
     Device->CreateRenderTargetView(PositionFrameBuffer, &positionRTVDesc, &PositionRTV);
-    
+    Device->CreateShaderResourceView(PositionFrameBuffer, nullptr, &pPositionSRV);
     
     RTVs[0] = ScreenColorBufferRTV;
     RTVs[1] = UUIDFrameBufferRTV;

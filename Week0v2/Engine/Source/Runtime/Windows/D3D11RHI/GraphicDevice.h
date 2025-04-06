@@ -44,6 +44,11 @@ public:
 
     // Depth를 렌더링하기 위해 필요한 리소스 뷰
     ID3D11ShaderResourceView* DepthSRV = nullptr;
+
+
+    /* FOG 관련 */
+    ID3D11ShaderResourceView* pSceneSRV = nullptr;
+    ID3D11ShaderResourceView* pPositionSRV = nullptr;
     
 
     void Initialize(HWND hWindow);

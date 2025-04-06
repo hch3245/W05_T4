@@ -110,9 +110,7 @@ public: // line shader
     ID3D11ShaderResourceView* CreateOBBSRV(ID3D11Buffer* pBoundingBoxBuffer, UINT numBoundingBoxes);
     ID3D11ShaderResourceView* CreateConeSRV(ID3D11Buffer* pConeBuffer, UINT numCones);
 
-    /* PASS 관련 SRV*/
-    ID3D11ShaderResourceView* CreateSceneColorSRV();
-    ID3D11ShaderResourceView* CreatePositionSRV();
+    
 
     void UpdateBoundingBoxBuffer(ID3D11Buffer* pBoundingBoxBuffer, const TArray<FBoundingBox>& BoundingBoxes, int numBoundingBoxes) const;
     void UpdateOBBBuffer(ID3D11Buffer* pBoundingBoxBuffer, const TArray<FOBB>& BoundingBoxes, int numBoundingBoxes) const;
@@ -140,9 +138,6 @@ public:
     ID3D11ShaderResourceView* pBBSRV = nullptr;
     ID3D11ShaderResourceView* pConeSRV = nullptr;
     ID3D11ShaderResourceView* pOBBSRV = nullptr;
-    /* FOG 관련 */
-    ID3D11ShaderResourceView* pSceneSRV = nullptr;
-    ID3D11ShaderResourceView* pPositionSRV = nullptr;
 
     // Depth 렌더링을 위한 리소스 및 함수
 public:

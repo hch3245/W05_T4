@@ -36,8 +36,6 @@ void FRenderer::Initialize(FGraphicsDevice* graphics)
     CreateFogResources();
     ConstantBufferUpdater.UpdateLitUnlitConstant(FlagBuffer, 1);
 
-    CreateSceneColorSRV();
-    CreatePositionSRV();
 }
 
 void FRenderer::Release()
@@ -752,8 +750,8 @@ void FRenderer::PrepareFogVisualization()
     Graphics->DeviceContext->VSSetShader(DepthVisualizationVS, nullptr, 0);
     Graphics->DeviceContext->PSSetShader(FogPS, nullptr, 0);
     Graphics->DeviceContext->PSSetSamplers(0, 1, &LinearSampler);
-    Graphics->DeviceContext->PSSetShaderResources(0, 1, &pSceneSRV);
-    Graphics->DeviceContext->PSSetShaderResources(1, 1, &pPositionSRV);
+    Graphics->DeviceContext->PSSetShaderResources(0, 1, &Graphics->pSceneSRV);
+    Graphics->DeviceContext->PSSetShaderResources(1, 1, &Graphics->pPositionSRV);
 
     
     Graphics->DeviceContext->OMSetBlendState(nullptr, nullptr, 0xFFFFFFFF);
@@ -950,35 +948,6 @@ ID3D11ShaderResourceView* FRenderer::CreateConeSRV(ID3D11Buffer* pConeBuffer, UI
     return pConeSRV;
 }
 
-ID3D11ShaderResourceView* FRenderer::CreateSceneColorSRV()
-{
-    // SceneColor용 SRV 생성
-    // 각 필드는 SRV의 구체적이 구조와 역할을 정의.
-    D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
-    // Format : 텍스처의 픽셀 포맷을 지정. 여기선 sRGB 감마 보정이 포함된 8비트 BGRA포맷을 의미.
-    // 후처리에서 색 공간 정확도가 중요할 때 sRGB를 써.
-    srvDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB;
-    // SRV가 어떤 종류의 자원인지 정의함. 여기선 2D 텍스처(TEXTURE2D)
-    // 만약에 텍스처 배열이면 D3D11_SRV_DIMENSION_TEXTURE2DArray 를 써야 하고,
-    // 버퍼면 D3D11_SRV_DIMENSION_BUFFER 사용.
-    srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
-    // 접근할 수 있는 MipLevel 수 , 보통 1dlaus mipmapping 안 씀.
-    srvDesc.Texture2D.MipLevels = 1;
-    
-    // FrameBuffer : 화면에 렌더링할 백버퍼.
-    // Graphics->FrameBuffer는 CreateFrameBuffer()에서 초기화.
-    
-    // 렌더 타겟으로 사용되었던 프레임 버퍼를 픽셀 셰이더가 읽을 수 있도록 SRV로 변환.
-    // 후처리 렌더 패스의 핵심.
-    Graphics->Device->CreateShaderResourceView(Graphics->ScreenColorBuffer, &srvDesc, &pSceneSRV);
-    return pSceneSRV;
-}
-
-ID3D11ShaderResourceView* FRenderer::CreatePositionSRV()
-{
-    Graphics->Device->CreateShaderResourceView(Graphics->PositionFrameBuffer, nullptr, &pPositionSRV);
-    return pPositionSRV;
-}
 
 
 
