@@ -702,7 +702,6 @@ void FRenderer::CreateDepthVisualizationResources()
 void FRenderer::CreateFogResources()
 {
     HRESULT hr;
-    ID3DBlob* VSBlob = nullptr; // VS Blob을 받을 변수
     ID3DBlob* PSBlob = nullptr; // PS Blob을 받을 변수
     ID3DBlob* ErrorBlob = nullptr; // 에러 Blob을 받을 변수
     hr = D3DCompileFromFile(L"Shaders/FogPS.hlsl", nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE,
@@ -711,20 +710,22 @@ void FRenderer::CreateFogResources()
         if (ErrorBlob) {
             UE_LOG(LogLevel::Error, "PS Compile Error: %s", (char*)ErrorBlob->GetBufferPointer());
             ErrorBlob->Release();
+            return;
         }
         else
         {
             UE_LOG(LogLevel::Error, "Failed to compile depth PS! File not found?");
-        }
-
-        hr = Graphics->Device->CreatePixelShader(PSBlob->GetBufferPointer(), PSBlob->GetBufferSize(), nullptr, &FogPS);
-        PSBlob->Release(); // PS Blob은 더 이상 필요 없음
-        if (FAILED(hr))
-        {
-            UE_LOG(LogLevel::Error, "Failed to create depth visualization pixel shader");
             return;
         }
     }
+    hr = Graphics->Device->CreatePixelShader(PSBlob->GetBufferPointer(), PSBlob->GetBufferSize(), nullptr, &FogPS);
+    if (FAILED(hr))
+    {
+        UE_LOG(LogLevel::Error, "Failed to create depth visualization pixel shader");
+        return;
+    }
+
+    PSBlob->Release(); // PS Blob은 더 이상 필요 없음
 }
 
 void FRenderer::ReleaseFogResources()
@@ -739,17 +740,22 @@ void FRenderer::PrepareFogVisualization()
 {
     UINT Stride = sizeof(FVertexTexture);
     UINT Offset = 0;
+
+    // OMSet을 통해서 ScreenColorBuffer를 RTV로 등록한 것을 제거하고, SRV로 사용해야 오류가 안남
+    Graphics->DeviceContext->OMSetRenderTargets(1, &Graphics->FrameBufferRTV, nullptr);
+
     Graphics->DeviceContext->IASetInputLayout(QuadInputLayout);
     Graphics->DeviceContext->IASetVertexBuffers(0, 1, &QuadVertexBuffer, &Stride, &Offset);
     Graphics->DeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
 
 
+    Graphics->DeviceContext->VSSetShader(DepthVisualizationVS, nullptr, 0);
     Graphics->DeviceContext->PSSetShader(FogPS, nullptr, 0);
     Graphics->DeviceContext->PSSetSamplers(0, 1, &LinearSampler);
     Graphics->DeviceContext->PSSetShaderResources(0, 1, &pSceneSRV);
     Graphics->DeviceContext->PSSetShaderResources(1, 1, &pPositionSRV);
 
-    Graphics->DeviceContext->OMSetRenderTargets(1, &Graphics->FrameBufferRTV, nullptr);
+    
     Graphics->DeviceContext->OMSetBlendState(nullptr, nullptr, 0xFFFFFFFF);
 }
 
@@ -767,7 +773,12 @@ void FRenderer::RenderFogVisualization()
     // FIXME : 사용 slot 확인후 해제해주기
     //Graphics -> DeviceContext -> PSSetShaderResources(0, 1, )
     // TODO : 빼도되는지 확인하기
-    Graphics->DeviceContext->OMSetRenderTargets(RTV_NUM, Graphics->RTVs, Graphics->DepthStencilView);
+   
+    // FOG 이후에는 PostProcess 단계이므로 FrameBufferRTV를 그리도록
+    // 만약 FrameBufferRTV를 사용하지 않으면, ImGUI가 이상한 곳에 그리게 된다.
+    // SwapChain의 BackBuffer가 아닌 곳에 그리게 되기에 ImGUI가 그려지지 않음
+    Graphics->DeviceContext->OMSetRenderTargets(1, &Graphics->FrameBufferRTV, nullptr);
+
 }
 
 void FRenderer::ReleaseDepthVisualizationResources()
@@ -802,7 +813,7 @@ void FRenderer::ReleaseDepthVisualizationResources()
 void FRenderer::PrepareDepthVisualization()
 {
     // 1. Render Target 설정 (GraphicsDevice에 함수를 만들어서 호출)
-    Graphics->DeviceContext->OMSetRenderTargets(RTV_NUM, Graphics->RTVs, nullptr);
+    Graphics->DeviceContext->OMSetRenderTargets(1, &Graphics->FrameBufferRTV, nullptr);
     // 2. Viewport 설정
     //Graphics->DeviceContext->RSSetViewports(1, &ActiveViewport->GetD3DViewport());
 
@@ -959,7 +970,7 @@ ID3D11ShaderResourceView* FRenderer::CreateSceneColorSRV()
     
     // 렌더 타겟으로 사용되었던 프레임 버퍼를 픽셀 셰이더가 읽을 수 있도록 SRV로 변환.
     // 후처리 렌더 패스의 핵심.
-    Graphics->Device->CreateShaderResourceView(Graphics->FrameBuffer, &srvDesc, &pSceneSRV);
+    Graphics->Device->CreateShaderResourceView(Graphics->ScreenColorBuffer, &srvDesc, &pSceneSRV);
     return pSceneSRV;
 }
 

@@ -35,5 +35,5 @@ float4 main(float4 pos : SV_POSITION, float2 uv : TEXCOORD) : SV_TARGET
     float3 sceneColor = SceneColor.Sample(LinearSampler, uv).rgb;
     float3 finalColor = lerp(sceneColor, fogColor, fogAmount);
     
-    return float4(finalColor, 1.0f);
+    return float4(sceneColor, 1.0f);
 }
