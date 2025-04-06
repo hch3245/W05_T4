@@ -12,7 +12,7 @@ Texture2D SceneColor : register(t0);
 Texture2D ScenePosition : register(t1);
 SamplerState LinearSampler : register(s0);
 
-float4 main(float4 pos : SV_POSITION, float2 uv : TEXCOORD) : SV_Target
+float4 main(float4 pos : SV_POSITION, float2 uv : TEXCOORD) : SV_TARGET
 {
     // 월드 위치 읽기
     float3 worldPos = ScenePosition.Sample(LinearSampler, uv).rgb;

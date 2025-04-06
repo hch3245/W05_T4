@@ -514,7 +514,9 @@
     <FxCompile Include="Shaders\DepthVisualizer.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
-    <FxCompile Include="Shaders\FogPS.hlsl" />
+    <FxCompile Include="Shaders\FogPS.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="Week0v2.natvis" />

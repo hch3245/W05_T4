@@ -705,7 +705,7 @@ void FRenderer::CreateFogResources()
     ID3DBlob* PSBlob = nullptr; // PS Blob을 받을 변수
     ID3DBlob* ErrorBlob = nullptr; // 에러 Blob을 받을 변수
     hr = D3DCompileFromFile(L"Shaders/FogPS.hlsl", nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE,
-        "mainPS", "vs_5_0", D3DCOMPILE_ENABLE_STRICTNESS | D3DCOMPILE_DEBUG, 0, &PSBlob, &ErrorBlob);
+        "main", "ps_5_0", D3DCOMPILE_ENABLE_STRICTNESS | D3DCOMPILE_DEBUG, 0, &PSBlob, &ErrorBlob);
     if (FAILED(hr)) {
         if (ErrorBlob) {
             UE_LOG(LogLevel::Error, "PS Compile Error: %s", (char*)ErrorBlob->GetBufferPointer());
