@@ -10,6 +10,8 @@ UFogComponent::UFogComponent()
     numIndices = 0;
 
     //FIXME : 임시 초기화 값.
+    curFogConstant = new FFogConstants();
+
     curFogConstant->FogDensity = 0.03f;
     curFogConstant->FogHeightFalloff = 0.1f;
     curFogConstant->StartDistance = fogStart;
@@ -30,6 +32,12 @@ UFogComponent::~UFogComponent()
         fullscreenQuadIB->Release();
         fullscreenQuadIB = nullptr;
     }
+    if (curFogConstant) 
+    {
+        delete curFogConstant;
+        curFogConstant = nullptr;
+    }
+
 }
 
 void UFogComponent::CreateScreenQuadVertexBuffer()

@@ -20,6 +20,7 @@
 #include "PropertyEditor/ShowFlags.h"
 #include "UObject/UObjectIterator.h"
 #include "Components/SkySphereComponent.h"
+#include "Runtime/Launch/Define.h"
 
 
 void FRenderer::Initialize(FGraphicsDevice* graphics)
