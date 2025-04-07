@@ -1,6 +1,8 @@
 #include "FogComponent.h"
 #include "Runtime/Engine/Classes/Components/QuadTexture.h"
-#include "Engine\Source\Runtime\Launch\EditorEngine.h"
+#include "Runtime/Launch/EditorEngine.h"
+#include "LevelEditor/SLevelEditor.h"
+#include "UnrealEd/EditorViewportClient.h"
 
 UFogComponent::UFogComponent()
 {
@@ -12,12 +14,12 @@ UFogComponent::UFogComponent()
     //FIXME : 임시 초기화 값.
     curFogConstant = new FFogConstants();
 
-    curFogConstant->FogDensity = 0.03f;
-    curFogConstant->FogHeightFalloff = 0.1f;
-    curFogConstant->StartDistance = fogStart;
-    curFogConstant->FogCutOffDistance = fogEnd;
-    curFogConstant->FogMaxOpacity = 0.8f;
-    curFogConstant->FogInScatteringColor = fogColor;
+    curFogConstant->FogDensity = 0.9f;
+    curFogConstant->FogHeightFalloff = 0.03f;
+    curFogConstant->StartDistance = 0.0f;
+    curFogConstant->FogCutOffDistance = 50.0f;
+    curFogConstant->FogMaxOpacity = 0.9f;
+    curFogConstant->FogInScatteringColor = FVector4(1.0f, 0.3f, 0.2f, 1.0f);
 }
 
 UFogComponent::~UFogComponent()
@@ -55,4 +57,9 @@ void UFogComponent::CreateScreenQuadVertexBuffer()
     {
         Console::GetInstance().AddLog(LogLevel::Warning, "Buffer Error");
     }
+}
+
+void UFogComponent::TickComponent(float DeltaTime)
+{
+    curFogConstant->CameraWorldPos = GEngine->GetLevelEditor()->GetActiveViewportClient()->ViewTransformPerspective.GetLocation();
 }

@@ -2,38 +2,55 @@ cbuffer FogConstants : register(b0)
 {
     float FogDensity;
     float FogHeightFalloff;
-    float StartDistance;
-    float FogCutoffDistance;
+    float StartDistance;                        // 안개가 시작되기 시작하는 거리
+    float FogCutoffDistance;                    // 안개가 최대치에 도달하는 거리
     float FogMaxOpacity;
+    float3 Pad1;
     float4 FogInscatteringColor;
+    float3 CameraWorldPos;
+    float Pad2;
 }
-
 Texture2D SceneColor : register(t0);
+// ScenePosition : 화면상의 픽셀마다 월드좌표가 저장도니 텍스처
 Texture2D ScenePosition : register(t1);
+// Detph : 깊이 버퍼, 사용 여부에 따라 월드 z로 치환될 수도 있음.
+Texture2D Depth : register(t2);
 SamplerState LinearSampler : register(s0);
 
 float4 main(float4 pos : SV_POSITION, float2 uv : TEXCOORD) : SV_TARGET
 {
-    // 월드 위치 읽기
     float3 worldPos = ScenePosition.Sample(LinearSampler, uv).rgb;
+    float depth = Depth.Sample(LinearSampler, uv).r;
+    // 해당 픽셀이 카메라에서 얼마나 떨어졌는지
+    // length : 벡터의 유클리디안 거리
+    float distance = length(worldPos - CameraWorldPos);
     
-    // 카메라 기준 거리 계산(StartDistance ~ FogCutoffDistance 까지)
-    float distance = length(worldPos);
     
+    // 지금 픽셀이 안개 구간에서 몇% 위치에 있는가를 정규화하는 단계
+    // fogDistanceFactor : 0 -> 안개 없음. / 1 -> 안개 최대치 도달.
+    // saturate : 결과를 0.0~1.0으로 clamp
     float fogDistanceFactor = saturate((distance - StartDistance) / (FogCutoffDistance - StartDistance));
-    
-    
+    float fogAmount = saturate(FogDensity * fogDistanceFactor);
+
     // 높이에 따른 감쇠 적용
-    float fogHeightFactor = exp(-FogHeightFalloff * worldPos.y);
+   // float fogHeightFactor = exp(-FogHeightFalloff * worldPos.y);
     
     // 최종 안개량
-    float fogAmount = saturate(fogHeightFactor * FogDensity * fogDistanceFactor);
+    //float fogAmount = saturate(fogHeightFactor * FogDensity * fogDistanceFactor);
+    //float fogAmount = saturate(FogDensity * distance);
+    
     fogAmount = min(fogAmount, FogMaxOpacity);
     
-    float3 fogColor = FogInscatteringColor.rgb;
-    
     float3 sceneColor = SceneColor.Sample(LinearSampler, uv).rgb;
-    float3 finalColor = lerp(sceneColor, fogColor, fogAmount);
     
-    return float4(sceneColor, 1.0f);
+    float3 fogColor = pow(FogInscatteringColor.rgb, 2.2); // 감마 → 선형 변환
+    
+    float3 finalColor = lerp(sceneColor, fogColor, fogAmount);    
+    return float4(finalColor.rgb, 1.0f);
+    //return float4(
+    //(distance - StartDistance) / (FogCutoffDistance - StartDistance),
+    //distance / 100.0f,
+    //FogCutoffDistance / 100.0f,
+    //1.0f
+//);
 }

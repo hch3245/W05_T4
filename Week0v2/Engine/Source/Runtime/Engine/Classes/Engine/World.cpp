@@ -44,10 +44,6 @@ void UWorld::CreateBaseObject()
     {
         FogComponent = FObjectFactory::ConstructObject<UFogComponent>();
         FogComponent->CreateScreenQuadVertexBuffer();
-
-        FogComponent->fogStart = 0.0f;
-        FogComponent->fogEnd = 100.0f;
-        FogComponent->fogColor = FVector4(0.5f, 0.5f, 0.5f, 1.0f);
     }
 }
 

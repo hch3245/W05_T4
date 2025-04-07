@@ -752,9 +752,15 @@ void FRenderer::PrepareFogVisualization()
     Graphics->DeviceContext->PSSetSamplers(0, 1, &LinearSampler);
     Graphics->DeviceContext->PSSetShaderResources(0, 1, &Graphics->pSceneSRV);
     Graphics->DeviceContext->PSSetShaderResources(1, 1, &Graphics->pPositionSRV);
+    Graphics->DeviceContext->PSSetShaderResources(2, 1, &Graphics->DepthSRV);
 
     
     Graphics->DeviceContext->OMSetBlendState(nullptr, nullptr, 0xFFFFFFFF);
+}
+
+void FRenderer::PrepareFogConstant()
+{
+    Graphics->DeviceContext->PSSetConstantBuffers(0, 1, &FogConstantBuffer);
 }
 
 void FRenderer::RenderFogVisualization()
@@ -765,6 +771,7 @@ void FRenderer::RenderFogVisualization()
     }
     
     PrepareFogVisualization();
+    PrepareFogConstant();
     Graphics->DeviceContext->Draw(4, 0);
 
     ID3D11ShaderResourceView* nullSRV[1] = { nullptr };

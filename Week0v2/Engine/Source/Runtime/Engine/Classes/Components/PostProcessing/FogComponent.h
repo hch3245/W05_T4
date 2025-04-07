@@ -1,6 +1,7 @@
 #pragma once
 #include "Runtime/Engine/Classes/Components/ActorComponent.h"
 #include "Runtime/Launch/Define.h"
+
 class UFogComponent : public UActorComponent 
 {
     DECLARE_CLASS(UFogComponent, UActorComponent)
@@ -16,10 +17,7 @@ public:
     UINT numIndices;
 
     void CreateScreenQuadVertexBuffer();
-
-    float fogStart = 0.0f;
-    float fogEnd = 100.0f;
-    FVector4 fogColor;
+    virtual void TickComponent(float DeltaTime) override;
 
     FFogConstants* curFogConstant;
 };

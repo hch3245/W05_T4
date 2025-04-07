@@ -158,6 +158,7 @@ private:
     void CreateFogResources();
     void ReleaseFogResources();
     void PrepareFogVisualization();
+    void PrepareFogConstant();
     void RenderFogVisualization();
 
 public:

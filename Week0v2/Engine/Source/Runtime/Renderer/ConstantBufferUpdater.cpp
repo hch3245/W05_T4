@@ -1,5 +1,6 @@
 #include "ConstantBufferUpdater.h"
 #include <Engine/Texture.h>
+#include <EditorEngine.h>
 
 void FConstantBufferUpdater::Initialize(ID3D11DeviceContext* InDeviceContext)
 {
@@ -127,7 +128,20 @@ void FConstantBufferUpdater::UpdateSubUVConstant(ID3D11Buffer* SubUVConstantBuff
 void FConstantBufferUpdater::UpdateFogConstant(ID3D11Buffer* buffer, FFogConstants* fogConstant) const
 {
     D3D11_MAPPED_SUBRESOURCE mappedResource;
+    
     DeviceContext->Map(buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
-    memcpy(mappedResource.pData, fogConstant, sizeof(FFogConstants));
+    auto constants = static_cast<FFogConstants*>(mappedResource.pData);
+    {
+        constants->FogDensity = fogConstant->FogDensity;
+        constants->FogHeightFalloff = fogConstant->FogHeightFalloff;
+        constants->StartDistance = fogConstant->StartDistance;
+        constants->FogCutOffDistance = fogConstant->FogCutOffDistance;
+        constants->FogMaxOpacity = fogConstant->FogMaxOpacity;
+        constants->FogInScatteringColor = fogConstant->FogInScatteringColor;
+        constants->CameraWorldPos = fogConstant->CameraWorldPos;
+    }
     DeviceContext->Unmap(buffer, 0);
+
+    //memcpy(mappedResource.pData, fogConstant, sizeof(FFogConstants));
+    //DeviceContext->Unmap(buffer, 0);
 }

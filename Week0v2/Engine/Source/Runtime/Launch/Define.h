@@ -325,11 +325,14 @@ struct FSubUVConstant
     float indexV;
 };
 
-struct FFogConstants {
+struct alignas(16) FFogConstants {
     float FogDensity;                   // 안개 밀도
     float FogHeightFalloff;             // 높이에 따른 안개 감쇠 정도
     float StartDistance;                // 카메라에서 안개가 시작되는 최소 거리
     float FogCutOffDistance;            // 안개가 완전히 적용되는 최대 거리
-    float FogMaxOpacity;                // 안개 최대 불투명도
+    float FogMaxOpacity;    // 안개 최대 불투명도
+    float pad1[3];
     FVector4 FogInScatteringColor;       // 빛의 산란 색상
+    FVector CameraWorldPos;
+    float padding2;    
 };
