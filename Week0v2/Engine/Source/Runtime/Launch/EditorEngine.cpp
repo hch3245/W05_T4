@@ -197,7 +197,7 @@ void UEditorEngine::StopPIE()
     GUObjectArray.MarkRemoveObject(worldContexts[1].World()->GetLevel());
     worldContexts[1].World()->GetEditorPlayer()->Destroy();
     GUObjectArray.MarkRemoveObject( worldContexts[1].World()->GetWorld());
-    worldContexts[1].thisCurrentWorld.reset();
+    worldContexts[1].thisCurrentWorld.reset(); 
     
     // GWorld->WorldType = EWorldType::Editor;
     levelType = LEVELTICK_ViewportsOnly;
@@ -212,7 +212,9 @@ void UEditorEngine::StopPIE()
 void UEditorEngine::Exit()
 {
     LevelEditor->Release();
-    GWorld->Release();
+    //GWorld->Release();    // Release 다른 곳에서 해주나봄, 이거 Release하면 중복 Release로 Crash
+    worldContexts.Empty();
+
     UIMgr->Shutdown();
     delete UIMgr;
     delete SceneMgr;
