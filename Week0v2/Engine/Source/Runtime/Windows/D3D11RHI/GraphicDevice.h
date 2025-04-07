@@ -4,6 +4,8 @@
 #pragma comment(lib, "d3dcompiler")
 
 #define _TCHAR_DEFINED
+
+#define RTV_NUM 3
 #include <d3d11.h>
 
 #include "EngineBaseTypes.h"
@@ -17,10 +19,14 @@ public:
     ID3D11DeviceContext* DeviceContext = nullptr;
     IDXGISwapChain* SwapChain = nullptr;
     ID3D11Texture2D* FrameBuffer = nullptr;
+    ID3D11Texture2D* ScreenColorBuffer = nullptr;   // 선행되는 렌더링에서 나오는 결과 보관
     ID3D11Texture2D* UUIDFrameBuffer = nullptr;
-    ID3D11RenderTargetView* RTVs[2];
+    ID3D11Texture2D* PositionFrameBuffer = nullptr;
+    ID3D11RenderTargetView* RTVs[RTV_NUM];
     ID3D11RenderTargetView* FrameBufferRTV = nullptr;
+    ID3D11RenderTargetView* ScreenColorBufferRTV = nullptr; // 선행되는 렌더링에서 나오는 결과 받기 위한 RTV
     ID3D11RenderTargetView* UUIDFrameBufferRTV = nullptr;
+    ID3D11RenderTargetView* PositionRTV = nullptr;
     ID3D11RasterizerState* RasterizerStateSOLID = nullptr;
     ID3D11RasterizerState* RasterizerStateWIREFRAME = nullptr;
     DXGI_SWAP_CHAIN_DESC SwapchainDesc;
@@ -35,6 +41,15 @@ public:
     FLOAT ClearColor[4] = { 0.025f, 0.025f, 0.025f, 1.0f }; // 화면을 초기화(clear) 할 때 사용할 색상(RGBA)
 
     ID3D11DepthStencilState* DepthStateDisable = nullptr;
+
+    // Depth를 렌더링하기 위해 필요한 리소스 뷰
+    ID3D11ShaderResourceView* DepthSRV = nullptr;
+
+
+    /* FOG 관련 */
+    ID3D11ShaderResourceView* pSceneSRV = nullptr;
+    ID3D11ShaderResourceView* pPositionSRV = nullptr;
+    
 
     void Initialize(HWND hWindow);
     void CreateDeviceAndSwapChain(HWND hWindow);

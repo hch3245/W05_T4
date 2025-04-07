@@ -39,6 +39,7 @@ public:
     ID3D11Buffer* MaterialConstantBuffer = nullptr;
     ID3D11Buffer* SubMeshConstantBuffer = nullptr;
     ID3D11Buffer* TextureConstantBufer = nullptr;
+    ID3D11Buffer* FogConstantBuffer = nullptr;
 
     FLighting lightingData;
 
@@ -109,6 +110,8 @@ public: // line shader
     ID3D11ShaderResourceView* CreateOBBSRV(ID3D11Buffer* pBoundingBoxBuffer, UINT numBoundingBoxes);
     ID3D11ShaderResourceView* CreateConeSRV(ID3D11Buffer* pConeBuffer, UINT numCones);
 
+    
+
     void UpdateBoundingBoxBuffer(ID3D11Buffer* pBoundingBoxBuffer, const TArray<FBoundingBox>& BoundingBoxes, int numBoundingBoxes) const;
     void UpdateOBBBuffer(ID3D11Buffer* pBoundingBoxBuffer, const TArray<FOBB>& BoundingBoxes, int numBoundingBoxes) const;
     void UpdateConesBuffer(ID3D11Buffer* pConeBuffer, const TArray<FCone>& Cones, int numCones) const;
@@ -136,6 +139,26 @@ public:
     ID3D11ShaderResourceView* pConeSRV = nullptr;
     ID3D11ShaderResourceView* pOBBSRV = nullptr;
 
+    // Depth 렌더링을 위한 리소스 및 함수
+public:
+    ID3D11VertexShader* DepthVisualizationVS = nullptr;
+    ID3D11PixelShader* DepthVisualizationPS = nullptr;
+    ID3D11InputLayout* QuadInputLayout = nullptr;
+    ID3D11Buffer* QuadVertexBuffer = nullptr;
+    ID3D11SamplerState* LinearSampler = nullptr;
+
+    ID3D11PixelShader* FogPS = nullptr;
+
+private:
+    void CreateDepthVisualizationResources();
+    void ReleaseDepthVisualizationResources();
+    void PrepareDepthVisualization();
+    void RenderDepthVisualization();
+
+    void CreateFogResources();
+    void ReleaseFogResources();
+    void PrepareFogVisualization();
+    void RenderFogVisualization();
 
 public:
     FRenderResourceManager& GetResourceManager() { return RenderResourceManager; }

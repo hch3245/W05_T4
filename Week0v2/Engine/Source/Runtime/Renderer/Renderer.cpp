@@ -20,6 +20,7 @@
 #include "PropertyEditor/ShowFlags.h"
 #include "UObject/UObjectIterator.h"
 #include "Components/SkySphereComponent.h"
+#include "Runtime/Launch/Define.h"
 
 
 void FRenderer::Initialize(FGraphicsDevice* graphics)
@@ -31,13 +32,18 @@ void FRenderer::Initialize(FGraphicsDevice* graphics)
 
     CreateShader();
     CreateConstantBuffer();
+    CreateDepthVisualizationResources(); // 깊이 시각화 리소스 생성
+    CreateFogResources();
     ConstantBufferUpdater.UpdateLitUnlitConstant(FlagBuffer, 1);
+
 }
 
 void FRenderer::Release()
 {
     ReleaseShader();
     ReleaseConstantBuffer();
+    ReleaseDepthVisualizationResources(); // 깊이 시각화 리소스 해제
+    ReleaseFogResources();
 }
 
 #pragma region Shader
@@ -95,18 +101,28 @@ void FRenderer::ReleaseShader()
 // Prepare
 void FRenderer::PrepareShader() const
 {
+    // 정점 셰이더 바인딩.
     Graphics->DeviceContext->VSSetShader(VertexShader, nullptr, 0);
+    // 픽셀 셰이더 바인딩.
     Graphics->DeviceContext->PSSetShader(PixelShader, nullptr, 0);
+    // Vertex Buffer 데이터 포맷에 맞는 Input Layout 설정.
     Graphics->DeviceContext->IASetInputLayout(InputLayout);
 
     if (ConstantBuffer)
     {
+        // b0 slot 바인딩
         Graphics->DeviceContext->VSSetConstantBuffers(0, 1, &ConstantBuffer);
         Graphics->DeviceContext->PSSetConstantBuffers(0, 1, &ConstantBuffer);
+        
+        // 머티리얼 Cbuffer 픽셀 셰이더 b1 slot 바인딩
         Graphics->DeviceContext->PSSetConstantBuffers(1, 1, &MaterialConstantBuffer);
+        // 라이트 Cbuffer 픽셀 세이더 b2 slot 바인딩
         Graphics->DeviceContext->PSSetConstantBuffers(2, 1, &LightingBuffer);
+        // Lit/Unlit flag 관련 b3 slot 바인딩
         Graphics->DeviceContext->PSSetConstantBuffers(3, 1, &FlagBuffer);
+        // 서브 메시 선택 여부 Cbuffer b3 바인딩.
         Graphics->DeviceContext->PSSetConstantBuffers(4, 1, &SubMeshConstantBuffer);
+        // 텍스처 Cbuffer  b5 slot 바인딩.
         Graphics->DeviceContext->PSSetConstantBuffers(5, 1, &TextureConstantBufer);
     }
 }
@@ -164,6 +180,7 @@ void FRenderer::CreateConstantBuffer()
     TextureConstantBufer = RenderResourceManager.CreateConstantBuffer(sizeof(FTextureConstants));
     LightingBuffer = RenderResourceManager.CreateConstantBuffer(sizeof(FLighting));
     FlagBuffer = RenderResourceManager.CreateConstantBuffer(sizeof(FLitUnlitConstants));
+    FogConstantBuffer = RenderResourceManager.CreateConstantBuffer(sizeof(FFogConstants));
 }
 
 void FRenderer::ReleaseConstantBuffer()
@@ -177,6 +194,7 @@ void FRenderer::ReleaseConstantBuffer()
     RenderResourceManager.ReleaseBuffer(TextureConstantBufer);
     RenderResourceManager.ReleaseBuffer(LightingBuffer);
     RenderResourceManager.ReleaseBuffer(FlagBuffer);
+    RenderResourceManager.ReleaseBuffer(FogConstantBuffer);
 }
 #pragma endregion ConstantBuffer
 
@@ -250,6 +268,9 @@ void FRenderer::Render(UWorld* World, std::shared_ptr<FEditorViewportClient> Act
     ConstantBufferUpdater.UpdateLightConstant(LightingBuffer);
     UPrimitiveBatch::GetInstance().RenderBatch(ConstantBuffer, ActiveViewport->GetViewMatrix(), ActiveViewport->GetProjectionMatrix());
 
+    
+    
+
     if (ActiveViewport->GetShowFlag() & static_cast<uint64>(EEngineShowFlags::SF_Primitives))
         RenderStaticMeshes(World, ActiveViewport);
     RenderGizmos(World, ActiveViewport);
@@ -257,6 +278,13 @@ void FRenderer::Render(UWorld* World, std::shared_ptr<FEditorViewportClient> Act
         RenderBillboards(World, ActiveViewport);
     RenderLight(World, ActiveViewport);
 
+    if (ActiveViewport->GetViewMode() == EViewModeIndex::VMI_Depth)
+    {
+        RenderDepthVisualization();
+    }
+
+    RenderFogVisualization();
+    
     ClearRenderArr();
 }
 
@@ -388,10 +416,10 @@ void FRenderer::RenderStaticMeshes(UWorld* World, std::shared_ptr<FEditorViewpor
         FVector4 UUIDColor = StaticMeshComp->EncodeUUID() / 255.0f;
         if (World->GetSelectedActor() == StaticMeshComp->GetOwner())
         {
-            ConstantBufferUpdater.UpdateConstant(ConstantBuffer, MVP, NormalMatrix, UUIDColor, true);
+            ConstantBufferUpdater.UpdateConstant(ConstantBuffer, Model, MVP, NormalMatrix, UUIDColor, true);
         }
         else
-            ConstantBufferUpdater.UpdateConstant(ConstantBuffer, MVP, NormalMatrix, UUIDColor, false);
+            ConstantBufferUpdater.UpdateConstant(ConstantBuffer, Model, MVP, NormalMatrix, UUIDColor, false);
 
         if (USkySphereComponent* skysphere = Cast<USkySphereComponent>(StaticMeshComp))
         {
@@ -464,9 +492,9 @@ void FRenderer::RenderGizmos(const UWorld* World, const std::shared_ptr<FEditorV
         FMatrix MVP = Model * ActiveViewport->GetViewMatrix() * ActiveViewport->GetProjectionMatrix();
 
         if (GizmoComp == World->GetPickingGizmo())
-            ConstantBufferUpdater.UpdateConstant(ConstantBuffer, MVP, NormalMatrix, UUIDColor, true);
+            ConstantBufferUpdater.UpdateConstant(ConstantBuffer, Model, MVP, NormalMatrix, UUIDColor, true);
         else
-            ConstantBufferUpdater.UpdateConstant(ConstantBuffer, MVP, NormalMatrix, UUIDColor, false);
+            ConstantBufferUpdater.UpdateConstant(ConstantBuffer, Model, MVP, NormalMatrix, UUIDColor, false);
 
         if (!GizmoComp->GetStaticMesh()) continue;
 
@@ -499,9 +527,9 @@ void FRenderer::RenderBillboards(UWorld* World, std::shared_ptr<FEditorViewportC
         FMatrix NormalMatrix = FMatrix::Transpose(FMatrix::Inverse(Model));
         FVector4 UUIDColor = BillboardComp->EncodeUUID() / 255.0f;
         if (BillboardComp == World->GetPickingGizmo())
-            ConstantBufferUpdater.UpdateConstant(ConstantBuffer, MVP, NormalMatrix, UUIDColor, true);
+            ConstantBufferUpdater.UpdateConstant(ConstantBuffer, Model, MVP, NormalMatrix, UUIDColor, true);
         else
-            ConstantBufferUpdater.UpdateConstant(ConstantBuffer, MVP, NormalMatrix, UUIDColor, false);
+            ConstantBufferUpdater.UpdateConstant(ConstantBuffer, Model, MVP, NormalMatrix, UUIDColor, false);
 
         if (UParticleSubUVComp* SubUVParticle = Cast<UParticleSubUVComp>(BillboardComp))
         {
@@ -526,6 +554,297 @@ void FRenderer::RenderBillboards(UWorld* World, std::shared_ptr<FEditorViewportC
         }
     }
     PrepareShader();
+}
+
+void FRenderer::CreateDepthVisualizationResources()
+{
+    HRESULT hr;
+
+    // 1. 샘플러 생성
+    D3D11_SAMPLER_DESC SamplerDesc = {};
+    ZeroMemory(&SamplerDesc, sizeof(SamplerDesc));
+    SamplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+    SamplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
+    SamplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
+    SamplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
+    SamplerDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
+    SamplerDesc.MinLOD = 0;
+    SamplerDesc.MaxLOD = D3D11_FLOAT32_MAX;
+    hr = Graphics->Device->CreateSamplerState(&SamplerDesc, &LinearSampler);
+    if (FAILED(hr))
+    {
+        Console::GetInstance().AddLog(LogLevel::Error, "Failed to create linear sampler state");
+        return;
+    }
+
+    // 2. 셰이더 생성(일단은 ShaderManager를 사용하지 않음)
+    ID3DBlob* VSBlob = nullptr; // VS Blob을 받을 변수
+    ID3DBlob* PSBlob = nullptr; // PS Blob을 받을 변수
+    ID3DBlob* ErrorBlob = nullptr; // 에러 Blob을 받을 변수
+    hr = D3DCompileFromFile(L"Shaders/DepthVisualizer.hlsl", nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE,
+        "mainVS", "vs_5_0", D3DCOMPILE_ENABLE_STRICTNESS | D3DCOMPILE_DEBUG, 0, &VSBlob, &ErrorBlob);
+    if (FAILED(hr)) 
+    {
+        if (ErrorBlob)
+        { 
+            UE_LOG(LogLevel::Error, "VS Compile Error: %s", (char*)ErrorBlob->GetBufferPointer());
+            ErrorBlob->Release();
+        }
+        else
+        { 
+            UE_LOG(LogLevel::Error, "Failed to compile depth VS! File not found?");
+        }
+        return;
+    }
+    hr = Graphics->Device->CreateVertexShader(VSBlob->GetBufferPointer(), VSBlob->GetBufferSize(), nullptr, &DepthVisualizationVS);
+    if (FAILED(hr))
+    {
+        UE_LOG(LogLevel::Error, "Failed to create depth visualization vertex shader");
+        VSBlob->Release(); // VSBlob 해제
+        return;
+    }
+
+    hr = D3DCompileFromFile(L"Shaders/DepthVisualizer.hlsl", nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE,
+        "mainPS", "ps_5_0", D3DCOMPILE_ENABLE_STRICTNESS | D3DCOMPILE_DEBUG, 0, &PSBlob, &ErrorBlob);
+    if (FAILED(hr))
+    {
+        if (ErrorBlob)
+        {
+            UE_LOG(LogLevel::Error, "PS Compile Error: %s", (char*)ErrorBlob->GetBufferPointer());
+            ErrorBlob->Release();
+        }
+        else
+        {
+            UE_LOG(LogLevel::Error, "Failed to compile depth PS! File not found?");
+        }
+
+        if (VSBlob)
+        {
+            VSBlob->Release(); // VSBlob 해제
+        }
+        return;
+    }
+    hr = Graphics->Device->CreatePixelShader(PSBlob->GetBufferPointer(), PSBlob->GetBufferSize(), nullptr, &DepthVisualizationPS);
+    PSBlob->Release(); // PS Blob은 더 이상 필요 없음
+    if (FAILED(hr))
+    {
+        UE_LOG(LogLevel::Error, "Failed to create depth visualization pixel shader");
+        if (VSBlob)
+        {
+            VSBlob->Release(); // VSBlob 해제
+        }
+
+        return;
+    }
+
+    // 3. 정점 버퍼 생성
+    FVertexTexture Vertices[] = {
+        { -1.0f,  1.0f, 0.0f, 0.0f, 0.0f },
+        { 1.0f,  1.0f, 0.0f, 1.0f, 0.0f },
+        { -1.0f, -1.0f, 0.0f, 0.0f, 1.0f },
+        { 1.0f, -1.0f, 0.0f, 1.0f, 1.0f }
+    };
+
+    D3D11_BUFFER_DESC BufferDesc = {};
+    ZeroMemory(&BufferDesc, sizeof(BufferDesc));
+    BufferDesc.Usage = D3D11_USAGE_IMMUTABLE; // 정적 데이터
+    BufferDesc.ByteWidth = sizeof(Vertices) * 4;
+    BufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+    BufferDesc.CPUAccessFlags = 0; 
+
+    D3D11_SUBRESOURCE_DATA InitData;
+    ZeroMemory(&InitData, sizeof(InitData));
+    InitData.pSysMem = Vertices;
+
+    hr = Graphics->Device->CreateBuffer(&BufferDesc, &InitData, &QuadVertexBuffer);
+    if (FAILED(hr))
+    {
+        UE_LOG(LogLevel::Error, "Failed to create quad vertex buffer");
+        if (VSBlob)
+        {
+            VSBlob->Release(); // VSBlob 해제
+        }
+        return;
+    }
+
+    // 4. Input Layout 생성
+    D3D11_INPUT_ELEMENT_DESC Layout[] =
+    {
+        {"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
+        {"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0},
+    };
+    UINT NumElements = ARRAYSIZE(Layout);
+
+    if (VSBlob)
+    {
+        hr = Graphics->Device->CreateInputLayout(Layout, NumElements, VSBlob->GetBufferPointer(), VSBlob->GetBufferSize(), &QuadInputLayout);
+        VSBlob->Release(); // InputLayout 생성 후 VSBlob 해제
+        if (FAILED(hr))
+        {
+            UE_LOG(LogLevel::Error, "Failed to create input layout for depth visualization");
+            return;
+        }
+    }
+    else
+    {
+        UE_LOG(LogLevel::Error, "VSBlob is null after creating input layout");
+        return;
+    }
+
+    if (ErrorBlob)
+    {
+        ErrorBlob->Release(); // ErrorBlob 해제
+    }
+}
+
+void FRenderer::CreateFogResources()
+{
+    HRESULT hr;
+    ID3DBlob* PSBlob = nullptr; // PS Blob을 받을 변수
+    ID3DBlob* ErrorBlob = nullptr; // 에러 Blob을 받을 변수
+    hr = D3DCompileFromFile(L"Shaders/FogPS.hlsl", nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE,
+        "main", "ps_5_0", D3DCOMPILE_ENABLE_STRICTNESS | D3DCOMPILE_DEBUG, 0, &PSBlob, &ErrorBlob);
+    if (FAILED(hr)) {
+        if (ErrorBlob) {
+            UE_LOG(LogLevel::Error, "PS Compile Error: %s", (char*)ErrorBlob->GetBufferPointer());
+            ErrorBlob->Release();
+            return;
+        }
+        else
+        {
+            UE_LOG(LogLevel::Error, "Failed to compile depth PS! File not found?");
+            return;
+        }
+    }
+    hr = Graphics->Device->CreatePixelShader(PSBlob->GetBufferPointer(), PSBlob->GetBufferSize(), nullptr, &FogPS);
+    if (FAILED(hr))
+    {
+        UE_LOG(LogLevel::Error, "Failed to create depth visualization pixel shader");
+        return;
+    }
+
+    PSBlob->Release(); // PS Blob은 더 이상 필요 없음
+}
+
+void FRenderer::ReleaseFogResources()
+{
+    if (FogPS) {
+        FogPS->Release();
+        FogPS = nullptr;
+    }
+}
+
+void FRenderer::PrepareFogVisualization()
+{
+    UINT Stride = sizeof(FVertexTexture);
+    UINT Offset = 0;
+
+    // OMSet을 통해서 ScreenColorBuffer를 RTV로 등록한 것을 제거하고, SRV로 사용해야 오류가 안남
+    Graphics->DeviceContext->OMSetRenderTargets(1, &Graphics->FrameBufferRTV, nullptr);
+
+    Graphics->DeviceContext->IASetInputLayout(QuadInputLayout);
+    Graphics->DeviceContext->IASetVertexBuffers(0, 1, &QuadVertexBuffer, &Stride, &Offset);
+    Graphics->DeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+
+
+    Graphics->DeviceContext->VSSetShader(DepthVisualizationVS, nullptr, 0);
+    Graphics->DeviceContext->PSSetShader(FogPS, nullptr, 0);
+    Graphics->DeviceContext->PSSetSamplers(0, 1, &LinearSampler);
+    Graphics->DeviceContext->PSSetShaderResources(0, 1, &Graphics->pSceneSRV);
+    Graphics->DeviceContext->PSSetShaderResources(1, 1, &Graphics->pPositionSRV);
+
+    
+    Graphics->DeviceContext->OMSetBlendState(nullptr, nullptr, 0xFFFFFFFF);
+}
+
+void FRenderer::RenderFogVisualization()
+{
+    UFogComponent* Fog = GEngine->GetWorld()->GetFogComponent();
+    if (Fog) {
+        ConstantBufferUpdater.UpdateFogConstant(FogConstantBuffer, GEngine->GetWorld()->GetFogComponent()->curFogConstant);
+    }
+    
+    PrepareFogVisualization();
+    Graphics->DeviceContext->Draw(4, 0);
+
+    ID3D11ShaderResourceView* nullSRV[1] = { nullptr };
+    // FIXME : 사용 slot 확인후 해제해주기
+    //Graphics -> DeviceContext -> PSSetShaderResources(0, 1, )
+    // TODO : 빼도되는지 확인하기
+   
+    // FOG 이후에는 PostProcess 단계이므로 FrameBufferRTV를 그리도록
+    // 만약 FrameBufferRTV를 사용하지 않으면, ImGUI가 이상한 곳에 그리게 된다.
+    // SwapChain의 BackBuffer가 아닌 곳에 그리게 되기에 ImGUI가 그려지지 않음
+    Graphics->DeviceContext->OMSetRenderTargets(1, &Graphics->FrameBufferRTV, nullptr);
+
+}
+
+void FRenderer::ReleaseDepthVisualizationResources()
+{
+    if (LinearSampler)
+    {
+        LinearSampler->Release();
+        LinearSampler = nullptr;
+    }
+    if (DepthVisualizationVS)
+    {
+        DepthVisualizationVS->Release();
+        DepthVisualizationVS = nullptr;
+    }
+    if (DepthVisualizationPS)
+    {
+        DepthVisualizationPS->Release();
+        DepthVisualizationPS = nullptr;
+    }
+    if (QuadVertexBuffer)
+    {
+        QuadVertexBuffer->Release();
+        QuadVertexBuffer = nullptr;
+    }
+    if (QuadInputLayout)
+    {
+        QuadInputLayout->Release();
+        QuadInputLayout = nullptr;
+    }
+}
+
+void FRenderer::PrepareDepthVisualization()
+{
+    // 1. Render Target 설정 (GraphicsDevice에 함수를 만들어서 호출)
+    Graphics->DeviceContext->OMSetRenderTargets(1, &Graphics->FrameBufferRTV, nullptr);
+    // 2. Viewport 설정
+    //Graphics->DeviceContext->RSSetViewports(1, &ActiveViewport->GetD3DViewport());
+
+    // 3. 입력 어셈블러 설정
+    UINT Stride = sizeof(FVertexTexture);
+    UINT Offset = 0;
+    Graphics->DeviceContext->IASetInputLayout(QuadInputLayout);
+    Graphics->DeviceContext->IASetVertexBuffers(0, 1, &QuadVertexBuffer, &Stride, &Offset);
+    Graphics->DeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+
+    // 4. 셰이더 및 리소스 설정
+    Graphics->DeviceContext->VSSetShader(DepthVisualizationVS, nullptr, 0);
+    Graphics->DeviceContext->PSSetShader(DepthVisualizationPS, nullptr, 0);
+    Graphics->DeviceContext->PSSetSamplers(0, 1, &LinearSampler);
+    Graphics->DeviceContext->PSSetShaderResources(0, 1, &(Graphics->DepthSRV));
+
+    // 5. 상태 설정
+    Graphics->DeviceContext->OMSetDepthStencilState(Graphics->DepthStateDisable, 1);
+    Graphics->DeviceContext->OMSetBlendState(nullptr, nullptr, 0xFFFFFFFF);
+}
+
+void FRenderer::RenderDepthVisualization()
+{
+    PrepareDepthVisualization();
+    
+    // 렌더링
+    Graphics->DeviceContext->Draw(4, 0);
+
+    // 사용한 SRV 
+    ID3D11ShaderResourceView* nullSRV[1] = { nullptr };
+    Graphics->DeviceContext->PSSetShaderResources(0, 1, nullSRV);
+    Graphics->DeviceContext->OMSetRenderTargets(2, Graphics->RTVs, Graphics->DepthStencilView);
+
 }
 
 
@@ -565,6 +884,7 @@ void FRenderer::ChangeViewMode(EViewModeIndex evi) const
     case EViewModeIndex::VMI_Wireframe:
     case EViewModeIndex::VMI_Unlit:
         ConstantBufferUpdater.UpdateLitUnlitConstant(FlagBuffer, 0);
+    case EViewModeIndex::VMI_Depth:
         break;
     }
 }
@@ -627,6 +947,10 @@ ID3D11ShaderResourceView* FRenderer::CreateConeSRV(ID3D11Buffer* pConeBuffer, UI
     Graphics->Device->CreateShaderResourceView(pConeBuffer, &srvDesc, &pConeSRV);
     return pConeSRV;
 }
+
+
+
+
 
 void FRenderer::UpdateBoundingBoxBuffer(ID3D11Buffer* pBoundingBoxBuffer, const TArray<FBoundingBox>& BoundingBoxes, int numBoundingBoxes) const
 {

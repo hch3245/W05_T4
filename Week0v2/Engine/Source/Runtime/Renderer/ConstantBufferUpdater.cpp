@@ -6,7 +6,7 @@ void FConstantBufferUpdater::Initialize(ID3D11DeviceContext* InDeviceContext)
     DeviceContext = InDeviceContext;
 }
 
-void FConstantBufferUpdater::UpdateConstant(ID3D11Buffer* ConstantBuffer, const FMatrix& MVP, const FMatrix& NormalMatrix, FVector4 UUIDColor, bool IsSelected) const
+void FConstantBufferUpdater::UpdateConstant(ID3D11Buffer* ConstantBuffer, const FMatrix& M, const FMatrix& MVP, const FMatrix& NormalMatrix, FVector4 UUIDColor, bool IsSelected) const
 {
     if (ConstantBuffer)
     {
@@ -16,6 +16,7 @@ void FConstantBufferUpdater::UpdateConstant(ID3D11Buffer* ConstantBuffer, const 
         {
             FConstants* constants = static_cast<FConstants*>(ConstantBufferMSR.pData);
             constants->MVP = MVP;
+            constants->M = M;
             constants->ModelMatrixInverseTranspose = NormalMatrix;
             constants->UUIDColor = UUIDColor;
             constants->IsSelected = IsSelected;
@@ -121,4 +122,12 @@ void FConstantBufferUpdater::UpdateSubUVConstant(ID3D11Buffer* SubUVConstantBuff
         }
         DeviceContext->Unmap(SubUVConstantBuffer, 0);
     }
+}
+
+void FConstantBufferUpdater::UpdateFogConstant(ID3D11Buffer* buffer, FFogConstants* fogConstant) const
+{
+    D3D11_MAPPED_SUBRESOURCE mappedResource;
+    DeviceContext->Map(buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
+    memcpy(mappedResource.pData, fogConstant, sizeof(FFogConstants));
+    DeviceContext->Unmap(buffer, 0);
 }

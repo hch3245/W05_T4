@@ -6,6 +6,7 @@
 #include "Container/Set.h"
 #include "UObject/ObjectFactory.h"
 #include "UObject/ObjectMacros.h"
+#include "Runtime/Engine/Classes/Components/PostProcessing/FogComponent.h"
 
 class FObjectFactory;
 class AActor;
@@ -55,6 +56,8 @@ private:
     USceneComponent* SelectedComponent = nullptr;
     USceneComponent* pickingGizmo = nullptr;
     AEditorPlayer* EditorPlayer = nullptr;
+    UFogComponent* FogComponent = nullptr;
+    
 public:
     EWorldType::Type WorldType = EWorldType::None;
     const TSet<AActor*>& GetActors() const { return Level->GetActors(); }
@@ -77,6 +80,7 @@ public:
     USceneComponent* GetPickingGizmo() const { return pickingGizmo; }
     void SetPickingGizmo(UObject* Object);
 
+    UFogComponent* GetFogComponent() const { return FogComponent; }
     // 임시
     bool IsPIEWorld() const;
     void BeginPlay();

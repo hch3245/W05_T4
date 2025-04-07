@@ -2,6 +2,7 @@
 cbuffer MatrixConstants : register(b0)
 {
     row_major float4x4 MVP;
+    row_major float4x4 M;
     row_major float4x4 MInverseTranspose;
     float4 UUID;
     bool isSelected;
@@ -25,6 +26,7 @@ struct PS_INPUT
     bool normalFlag : TEXCOORD0; // 노멀 유효성 플래그 (1.0: 유효, 0.0: 무효)
     float2 texcoord : TEXCOORD1;
     int materialIndex : MATERIAL_INDEX;
+    float4 worldPosition : POSITION;
 };
 
 PS_INPUT mainVS(VS_INPUT input)
@@ -32,6 +34,9 @@ PS_INPUT mainVS(VS_INPUT input)
     PS_INPUT output;
     
     output.materialIndex = input.materialIndex;
+    
+    // World 위치
+    output.worldPosition = mul(input.position, M);
     
     // 위치 변환
     output.position = mul(input.position, MVP);

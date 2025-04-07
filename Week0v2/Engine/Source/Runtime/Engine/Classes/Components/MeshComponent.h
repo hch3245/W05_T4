@@ -8,6 +8,7 @@ class UMeshComponent : public UPrimitiveComponent
 public:
     UMeshComponent() = default;
     UMeshComponent(const UMeshComponent& Other);
+    ~UMeshComponent() override;
 
 #pragma region Material
     virtual uint32 GetNumMaterials() const { return 0; }

@@ -425,6 +425,9 @@
     <ClInclude Include="Engine\Source\Runtime\Renderer\ShaderManager.h" />
     <ClInclude Include="Engine\Source\Runtime\Launch\LaunchEngineLoop.h" />
     <ClInclude Include="Engine\Source\Runtime\Renderer\RenderResourceManager.h" />
+    <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Components\PostProcessing\FogComponent.h">
+      <Filter>Engine\Source\Runtime\Engine\Classes\Components</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Engine\Source\ThirdParty\DirectXTK\Include\DDSTextureLoader.h" />
@@ -508,6 +511,12 @@
     <FxCompile Include="Shaders\StaticMeshPixelShader.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
+    <FxCompile Include="Shaders\DepthVisualizer.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\FogPS.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="Week0v2.natvis" />
@@ -523,5 +532,8 @@
     <ClCompile Include="Engine\Source\Runtime\Launch\EditorEngine.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Renderer\RenderResourceManager.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Renderer\ShaderManager.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Components\PostProcessing\FogComponent.cpp">
+      <Filter>Engine\Source\Runtime\Engine\Classes\Components</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

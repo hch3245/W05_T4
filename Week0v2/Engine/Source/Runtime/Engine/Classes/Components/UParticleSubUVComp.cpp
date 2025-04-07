@@ -20,6 +20,13 @@ UParticleSubUVComp::~UParticleSubUVComp()
 	}
 }
 
+UParticleSubUVComp::UParticleSubUVComp(const UParticleSubUVComp& other) : UBillboardComponent(other),
+vertexSubUVBuffer(other.vertexSubUVBuffer), numTextVertices(other.numTextVertices),
+CellsPerRow(other.CellsPerRow), CellsPerColumn(other.CellsPerColumn)
+{
+
+}
+
 void UParticleSubUVComp::InitializeComponent()
 {
 	Super::InitializeComponent();
@@ -76,6 +83,24 @@ void UParticleSubUVComp::SetRowColumnCount(int _cellsPerRow, int _cellsPerColumn
 	CellsPerColumn = _cellsPerColumn;
 
 	CreateSubUVVertexBuffer();
+}
+
+UObject* UParticleSubUVComp::Duplicate() const
+{
+    UParticleSubUVComp* ClonedActor = FObjectFactory::ConstructObjectFrom<UParticleSubUVComp>(this);
+    ClonedActor->DuplicateSubObjects(this);
+    ClonedActor->PostDuplicate();
+    return ClonedActor;
+}
+
+void UParticleSubUVComp::DuplicateSubObjects(const UObject* Source)
+{
+    UPrimitiveComponent::DuplicateSubObjects(Source);
+}
+
+void UParticleSubUVComp::PostDuplicate()
+{
+    UPrimitiveComponent::PostDuplicate();
 }
 
 void UParticleSubUVComp::UpdateVertexBuffer(const TArray<FVertexTexture>& vertices)
