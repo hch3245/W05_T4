@@ -173,6 +173,7 @@ void SLevelEditor::ResizeViewports()
     else
     {
         ActiveViewportClient->GetViewport()->ResizeViewport(FRect(0.0f, 0.0f, EditorWidth, EditorHeight));
+        originalViewport.ResizeViewport(FRect(0.0f, 0.0f, EditorWidth, EditorHeight));
     }
 }
 

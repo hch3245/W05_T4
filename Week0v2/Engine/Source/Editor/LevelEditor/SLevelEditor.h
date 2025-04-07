@@ -1,10 +1,13 @@
 #pragma once
 #include "Define.h"
 #include "Container/Map.h"
+#include "Runtime/Engine/UnrealClient.h"
+
 class SSplitterH;
 class SSplitterV;
 class UWorld;
 class FEditorViewportClient;
+
 class SLevelEditor
 {
 public:
@@ -28,6 +31,7 @@ private:
     UWorld* World;
     std::shared_ptr<FEditorViewportClient> viewportClients[4];
     std::shared_ptr<FEditorViewportClient> ActiveViewportClient;
+    FViewport originalViewport;
 
     bool bLButtonDown = false;
     bool bRButtonDown = false;
@@ -39,6 +43,7 @@ private:
     float EditorHeight;
 
 public:
+    FViewport GetOriginalViewport() { return originalViewport; }
     std::shared_ptr<FEditorViewportClient>* GetViewports() { return viewportClients; }
     std::shared_ptr<FEditorViewportClient> GetActiveViewportClient() const
     {

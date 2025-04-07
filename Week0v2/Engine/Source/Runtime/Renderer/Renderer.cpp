@@ -21,6 +21,7 @@
 #include "UObject/UObjectIterator.h"
 #include "Components/SkySphereComponent.h"
 #include "Runtime/Launch/Define.h"
+#include "Runtime/Engine/UnrealClient.h"
 
 
 void FRenderer::Initialize(FGraphicsDevice* graphics)
@@ -260,9 +261,11 @@ void FRenderer::PrepareRender()
     }
 }
 
-void FRenderer::Render(UWorld* World, std::shared_ptr<FEditorViewportClient> ActiveViewport)
+void FRenderer::Render(UWorld* World, std::shared_ptr<FEditorViewportClient> ActiveViewport,
+    FViewport OriginalViewport)
 {
-    Graphics->DeviceContext->RSSetViewports(1, &ActiveViewport->GetD3DViewport());
+    // SceneColorBuffer를 완성할 때는 원본 창 크기에 맞춰서 그리기
+    Graphics->DeviceContext->RSSetViewports(1, &OriginalViewport.GetViewport());
     Graphics->ChangeRasterizer(ActiveViewport->GetViewMode());
     ChangeViewMode(ActiveViewport->GetViewMode());
     ConstantBufferUpdater.UpdateLightConstant(LightingBuffer);
@@ -277,6 +280,9 @@ void FRenderer::Render(UWorld* World, std::shared_ptr<FEditorViewportClient> Act
     if (ActiveViewport->GetShowFlag() & static_cast<uint64>(EEngineShowFlags::SF_BillboardText))
         RenderBillboards(World, ActiveViewport);
     RenderLight(World, ActiveViewport);
+
+    // 최종 렌더링은 Viewport 영역에 맞춰서 그리기
+    Graphics->DeviceContext->RSSetViewports(1, &ActiveViewport->GetD3DViewport());
 
     if (ActiveViewport->GetViewMode() == EViewModeIndex::VMI_Depth)
     {
