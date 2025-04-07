@@ -323,3 +323,16 @@ struct FSubUVConstant
     float indexU;
     float indexV;
 };
+
+struct FCameraNearFarConstant
+{
+    float NearPlane;
+    float FarPlane;
+    float pad0;
+    float pad1;
+};
+ struct FViewportParamsConstant
+ {
+     FVector2D ViewportScale; // 뷰포트 크기
+     FVector2D ViewportOffset; // 뷰포트 오프셋
+ };

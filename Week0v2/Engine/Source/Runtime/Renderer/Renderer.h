@@ -143,11 +143,13 @@ public:
     ID3D11InputLayout* QuadInputLayout = nullptr;
     ID3D11Buffer* QuadVertexBuffer = nullptr;
     ID3D11SamplerState* LinearSampler = nullptr;
+    ID3D11Buffer* ViewportParamsConstantBuffer = nullptr;
+    ID3D11Buffer* CameraNearFarConstantBuffer = nullptr;
 private:
     void CreateDepthVisualizationResources();
     void ReleaseDepthVisualizationResources();
-    void PrepareDepthVisualization();
-    void RenderDepthVisualization();
+    void PrepareDepthVisualization(std::shared_ptr<FEditorViewportClient> ActiveViewport);
+    void RenderDepthVisualization(std::shared_ptr<FEditorViewportClient> ActiveViewport);
 
 
 public:

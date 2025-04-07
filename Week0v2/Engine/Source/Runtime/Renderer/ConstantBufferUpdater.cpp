@@ -122,3 +122,33 @@ void FConstantBufferUpdater::UpdateSubUVConstant(ID3D11Buffer* SubUVConstantBuff
         DeviceContext->Unmap(SubUVConstantBuffer, 0);
     }
 }
+
+void FConstantBufferUpdater::UpdateCameraNearFarConstant(ID3D11Buffer* CameraNearFarConstantBuffer, FCameraNearFarConstant& CameraNearFarConstant) const
+{
+    if (CameraNearFarConstantBuffer)
+    {
+        D3D11_MAPPED_SUBRESOURCE constantbufferMSR;
+        DeviceContext->Map(CameraNearFarConstantBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &constantbufferMSR);
+        FCameraNearFarConstant* constants = (FCameraNearFarConstant*)constantbufferMSR.pData;
+        {
+            constants->NearPlane = CameraNearFarConstant.NearPlane;
+            constants->FarPlane = CameraNearFarConstant.FarPlane;
+        }
+        DeviceContext->Unmap(CameraNearFarConstantBuffer, 0);
+    }
+}
+
+void FConstantBufferUpdater::UpdateViewportParamsConstant(ID3D11Buffer* ViewportParamsConstantBuffer, FViewportParamsConstant& ViewportParamsConstant) const
+{
+    if (ViewportParamsConstantBuffer)
+    {
+        D3D11_MAPPED_SUBRESOURCE constantbufferMSR;
+        DeviceContext->Map(ViewportParamsConstantBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &constantbufferMSR);
+        FViewportParamsConstant* constants = (FViewportParamsConstant*)constantbufferMSR.pData;
+        {
+            constants->ViewportScale = ViewportParamsConstant.ViewportScale;
+            constants->ViewportOffset = ViewportParamsConstant.ViewportOffset;
+        }
+        DeviceContext->Unmap(ViewportParamsConstantBuffer, 0);
+    }
+}
