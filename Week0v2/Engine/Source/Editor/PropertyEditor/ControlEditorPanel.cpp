@@ -16,7 +16,7 @@
 #include "PropertyEditor/ShowFlags.h"
 #include "UnrealEd/SceneMgr.h"
 #include "UEditorStateManager.h"
-
+#include "Components/FireBallComponent.h"
 void ControlEditorPanel::Render()
 {
     /* Pre Setup */
@@ -326,6 +326,8 @@ void ControlEditorPanel::CreateModifyButton(ImVec2 ButtonSize, ImFont* IconFont)
                     UStaticMeshComponent* MeshComp = TempActor->GetStaticMeshComponent();
                     FManagerOBJ::CreateStaticMesh("Assets/FireBall.obj");
                     MeshComp->SetStaticMesh(FManagerOBJ::GetStaticMesh(L"FireBall.obj"));
+                    UFireBallComponent* fire = TempActor->AddComponent<UFireBallComponent>();
+                    //fire->SetupAttachment(MeshComp);
                     break;
                 }
                 case OBJ_TRIANGLE:

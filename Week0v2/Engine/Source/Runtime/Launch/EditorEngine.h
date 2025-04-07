@@ -45,7 +45,7 @@ public:
     static FResourceMgr resourceMgr;
     
     HWND hWnd;
-    ELevelTick levelType = ELevelTick::LEVELTICK_ViewportsOnly;
+    ELevelTick levelType = ELevelTick::LEVELTICK_All;
 private:
     UImGuiManager* UIMgr;
     std::shared_ptr<UWorld> GWorld;

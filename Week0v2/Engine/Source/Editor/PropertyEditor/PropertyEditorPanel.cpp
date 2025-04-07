@@ -15,6 +15,10 @@
 #include "Components/PointLightComponent.h"
 #include "Components/SpotLightComponent.h"
 #include "Components/DirectionalLightComponent.h"
+#include "Components/FireBallComponent.h"
+#include "Components/RotationMovementComponent.h"
+#include "Components/ProjectileMovementComponent.h"
+
 void PropertyEditorPanel::Render()
 {
     /* Pre Setup */
@@ -127,6 +131,21 @@ void PropertyEditorPanel::Render()
                 {
                     USpotLightComponent* SLComp = PickedActor->AddComponent<USpotLightComponent>();
                     PickedComponent = SLComp;
+                }
+                if (ImGui::Selectable("FireBallComponent"))
+                {
+                    UFireBallComponent* FBComp = PickedActor->AddComponent<UFireBallComponent>();
+                    PickedComponent = FBComp;
+                }
+                if (ImGui::Selectable("RotationMovementComponent"))
+                {
+                    URotationMovementComponent* RTMVComp = PickedActor->AddComponent<URotationMovementComponent>();
+                    PickedComponent = RTMVComp;
+                }
+                if (ImGui::Selectable("ProjectileMovementComponent"))
+                {
+                    UProjectileMovementComponent* PJMVComp = PickedActor->AddComponent<UProjectileMovementComponent>();
+                    PickedComponent = PJMVComp;
                 }
                 ImGui::EndPopup();
             }
