@@ -93,7 +93,6 @@ void UWorld::Tick(ELevelTick tickType, float deltaSeconds)
         }
     }
 
-    FogComponent->TickComponent(deltaSeconds);
 }
 
 void UWorld::Release()
