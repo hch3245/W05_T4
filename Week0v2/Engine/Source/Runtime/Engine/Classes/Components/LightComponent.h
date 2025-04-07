@@ -24,7 +24,7 @@ public:
     float GetIntensity() const;
 private:
     FVector4 color;
-    float Intensity=10.0f;
+    float Intensity=1.0f;
     float radius=5.0f;           //SpotLight
     FBoundingBox AABB;
 public:

@@ -20,12 +20,13 @@ void USpotLightComponent::TickComponent(float DeltaTime)
 
 void USpotLightComponent::FillLightConstant(FLightConstants& outConstant)
 {
+    FVector v = FVector(1, 1, 1);
     const FMatrix& M = GetWorldTransform();
     const FQuat& Q = GetWorldQuaternion();
-    //outConstant.Position = FMatrix::TransformVector(Position, M);
-    //outConstant.Direction = FMatrix::TransformVector(Direction, M);
+    //outConstant.Position = FMatrix::TransformVector(v, M);
+    outConstant.Direction = FMatrix::TransformVector(GetForwardVector(), Q.ToMatrix());
     outConstant.Position = GetWorldLocation();
-    outConstant.Direction = GetForwardVector();
+    //outConstant.Direction = GetForwardVector();
     outConstant.Radius = Radius;
     outConstant.SpotAngle = Angles;
     outConstant.Type = type;

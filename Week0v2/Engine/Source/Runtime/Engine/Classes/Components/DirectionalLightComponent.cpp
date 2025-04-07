@@ -21,7 +21,8 @@ void UDirectionalLightComponent::TickComponent(float DeltaTime)
 void UDirectionalLightComponent::FillLightConstant(FLightConstants& outConstant)
 {
     const FMatrix& M = GetWorldTransform();
-    outConstant.Direction = FMatrix::TransformVector(Direction,M);
+    //outConstant.Direction = FMatrix::TransformVector(Direction,M);
+    outConstant.Direction = Direction;
     outConstant.Type = type;
     Super::FillLightConstant(outConstant);
 }

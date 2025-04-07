@@ -260,9 +260,10 @@ void ControlEditorPanel::CreateModifyButton(ImVec2 ButtonSize, ImFont* IconFont)
             { .label= "Sphere",    .obj= OBJ_SPHERE },
             { .label= "SpotLight", .obj= OBJ_SpotLight },
             { .label= "Particle",  .obj= OBJ_PARTICLE },
-            { .label= "Text",      .obj= OBJ_Text }
+            { .label= "Text",      .obj= OBJ_Text },
+            { .label= "FireBall",  .obj= OBJ_FireBall }
         };
-
+        
         for (const auto& primitive : primitives)
         {
             if (ImGui::Selectable(primitive.label))
@@ -316,6 +317,15 @@ void ControlEditorPanel::CreateModifyButton(ImVec2 ButtonSize, ImFont* IconFont)
                     TextComponent->SetTexture(L"Assets/Texture/font.png");
                     TextComponent->SetRowColumnCount(106, 106);
                     TextComponent->SetText(L"안녕하세요 Jungle 1");
+                    break;
+                }
+                case OBJ_FireBall:
+                {
+                    AStaticMeshActor* TempActor = World->SpawnActor<AStaticMeshActor>();
+                    TempActor->SetActorLabel(TEXT("OBJ_FireBall"));
+                    UStaticMeshComponent* MeshComp = TempActor->GetStaticMeshComponent();
+                    FManagerOBJ::CreateStaticMesh("Assets/FireBall.obj");
+                    MeshComp->SetStaticMesh(FManagerOBJ::GetStaticMesh(L"FireBall.obj"));
                     break;
                 }
                 case OBJ_TRIANGLE:
