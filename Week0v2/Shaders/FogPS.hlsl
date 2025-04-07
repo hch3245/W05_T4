@@ -30,16 +30,17 @@ float4 main(float4 pos : SV_POSITION, float2 uv : TEXCOORD) : SV_TARGET
     // fogDistanceFactor : 0 -> 안개 없음. / 1 -> 안개 최대치 도달.
     // saturate : 결과를 0.0~1.0으로 clamp
     float fogDistanceFactor = saturate((distance - StartDistance) / (FogCutoffDistance - StartDistance));
-    float fogAmount = saturate(FogDensity * fogDistanceFactor);
-
+    if (depth >= 1.0f)
+    {
+    // 원거리 클리어 값이 들어간 경우
+        fogDistanceFactor = 1;
+    }
     // 높이에 따른 감쇠 적용
-   // float fogHeightFactor = exp(-FogHeightFalloff * worldPos.y);
+   float fogHeightFactor = exp(-FogHeightFalloff * worldPos.y);
     
     // 최종 안개량
-    //float fogAmount = saturate(fogHeightFactor * FogDensity * fogDistanceFactor);
-    //float fogAmount = saturate(FogDensity * distance);
+    float fogAmount = saturate(fogHeightFactor * FogDensity * fogDistanceFactor);
     
-    fogAmount = min(fogAmount, FogMaxOpacity);
     
     float3 sceneColor = SceneColor.Sample(LinearSampler, uv).rgb;
     
@@ -47,10 +48,4 @@ float4 main(float4 pos : SV_POSITION, float2 uv : TEXCOORD) : SV_TARGET
     
     float3 finalColor = lerp(sceneColor, fogColor, fogAmount);    
     return float4(finalColor.rgb, 1.0f);
-    //return float4(
-    //(distance - StartDistance) / (FogCutoffDistance - StartDistance),
-    //distance / 100.0f,
-    //FogCutoffDistance / 100.0f,
-    //1.0f
-//);
 }
