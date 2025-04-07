@@ -9,18 +9,30 @@ UProjectileMovementComponent::~UProjectileMovementComponent()
 {
 }
 
+void UProjectileMovementComponent::InitializeComponent()
+{
+    AActor* owner = GetOwner();
+    if (owner)
+    {
+        Direction = owner->GetActorForwardVector();
+    }
+    Super::InitializeComponent();
+}
+
 void UProjectileMovementComponent::TickComponent(float DeltaTime)
 {
 
     AActor* owner = GetOwner();
-    if (LifeTime <= MaxLifeTime)
+    if (owner)
     {
-        FVector forward = owner->GetActorForwardVector();
-        FVector DeltaMove = forward * InitialSpeed * DeltaTime;
-        FVector currentLocation = owner->GetActorLocation();
-        FVector NewLocation = currentLocation + DeltaMove;
-        owner->SetActorLocation(NewLocation);
-        LifeTime += DeltaTime/1000;
+        if (LifeTime <= MaxLifeTime)
+        {
+            FVector DeltaMove = Direction * InitialSpeed * DeltaTime;
+            FVector currentLocation = owner->GetActorLocation();
+            FVector NewLocation = currentLocation + DeltaMove;
+            owner->SetActorLocation(NewLocation);
+            LifeTime += DeltaTime / 1000;
+        }
     }
 
     Super::TickComponent(DeltaTime);

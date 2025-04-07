@@ -17,6 +17,8 @@
 #include "UnrealEd/SceneMgr.h"
 #include "UEditorStateManager.h"
 #include "Components/FireBallComponent.h"
+#include "Components/RotationMovementComponent.h"
+#include "Components/ProjectileMovementComponent.h"
 void ControlEditorPanel::Render()
 {
     /* Pre Setup */
@@ -327,7 +329,9 @@ void ControlEditorPanel::CreateModifyButton(ImVec2 ButtonSize, ImFont* IconFont)
                     FManagerOBJ::CreateStaticMesh("Assets/FireBall.obj");
                     MeshComp->SetStaticMesh(FManagerOBJ::GetStaticMesh(L"FireBall.obj"));
                     UFireBallComponent* fire = TempActor->AddComponent<UFireBallComponent>();
-                    //fire->SetupAttachment(MeshComp);
+                    fire->SetColor(FVector4(1,0,0,1));
+                    TempActor->AddComponent<UProjectileMovementComponent>();
+                    TempActor->AddComponent<URotationMovementComponent>();
                     break;
                 }
                 case OBJ_TRIANGLE:

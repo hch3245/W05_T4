@@ -7,6 +7,7 @@ class UMovementComponent :
 public:
     UMovementComponent();
     virtual ~UMovementComponent();
+    virtual void InitializeComponent() override;
     virtual void TickComponent(float DeltaTime) override;
 };
 
