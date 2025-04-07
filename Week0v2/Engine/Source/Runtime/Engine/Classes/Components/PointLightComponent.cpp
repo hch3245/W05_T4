@@ -21,7 +21,7 @@ void UPointLightComponent::TickComponent(float DeltaTime)
 void UPointLightComponent::FillLightConstant(FLightConstants& outConstant)
 {
     const FMatrix& M = GetWorldTransform();
-    outConstant.Position = FMatrix::TransformVector(Position,M);
+    outConstant.Position = GetWorldLocation();
     outConstant.Radius = Radius;
     outConstant.Type = type;
     Super::FillLightConstant(outConstant);

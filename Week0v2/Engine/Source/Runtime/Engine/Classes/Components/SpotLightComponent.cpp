@@ -1,6 +1,6 @@
 #include "SpotLightComponent.h"
 #include "Math/JungleMath.h"
-USpotLightComponent::USpotLightComponent()
+USpotLightComponent::USpotLightComponent(): Direction(1,0,0)
 {
 }
 
@@ -22,8 +22,10 @@ void USpotLightComponent::FillLightConstant(FLightConstants& outConstant)
 {
     const FMatrix& M = GetWorldTransform();
     const FQuat& Q = GetWorldQuaternion();
-    outConstant.Position = FMatrix::TransformVector(Position, M);
-    outConstant.Direction = FMatrix::TransformVector(Direction, M);
+    //outConstant.Position = FMatrix::TransformVector(Position, M);
+    //outConstant.Direction = FMatrix::TransformVector(Direction, M);
+    outConstant.Position = GetWorldLocation();
+    outConstant.Direction = GetForwardVector();
     outConstant.Radius = Radius;
     outConstant.SpotAngle = Angles;
     outConstant.Type = type;
