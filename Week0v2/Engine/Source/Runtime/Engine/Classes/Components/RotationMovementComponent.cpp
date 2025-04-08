@@ -5,6 +5,11 @@ URotationMovementComponent::URotationMovementComponent()
 {
 }
 
+URotationMovementComponent::URotationMovementComponent(const URotationMovementComponent& other):
+    UMovementComponent(other), PitchSpeed(other.PitchSpeed),YawSpeed(other.YawSpeed),RollSpeed(other.RollSpeed)
+{
+}
+
 URotationMovementComponent::~URotationMovementComponent()
 {
 }
@@ -24,4 +29,23 @@ void URotationMovementComponent::TickComponent(float DeltaTime)
     FQuat WorldRotation = DeltaRotation * CurrentRotation;
     owner->SetActorRotation(WorldRotation.ToEulerDegrees());
     Super::TickComponent(DeltaTime);
+}
+
+UObject* URotationMovementComponent::Duplicate() const
+{
+    URotationMovementComponent* CloneRTMove =
+        FObjectFactory::ConstructObjectFrom<URotationMovementComponent>(this);
+    CloneRTMove->DuplicateSubObjects(this);
+    CloneRTMove->PostDuplicate();
+    return CloneRTMove;
+}
+
+void URotationMovementComponent::DuplicateSubObjects(const UObject* Source)
+{
+    UMovementComponent::DuplicateSubObjects(Source);
+}
+
+void URotationMovementComponent::PostDuplicate()
+{
+    UMovementComponent::PostDuplicate();
 }

@@ -4,7 +4,8 @@ UFireBallComponent::UFireBallComponent()
 {
 }
 
-UFireBallComponent::UFireBallComponent(const UFireBallComponent& other)
+UFireBallComponent::UFireBallComponent(const UFireBallComponent& other):
+    UPointLightComponent(other)
 {
 }
 
@@ -27,15 +28,15 @@ UObject* UFireBallComponent::Duplicate() const
     UFireBallComponent* CloneFireBall = FObjectFactory::ConstructObjectFrom<UFireBallComponent>(this);
     CloneFireBall->DuplicateSubObjects(this);
     CloneFireBall->PostDuplicate();
-    return nullptr;
+    return CloneFireBall;
 }
 
 void UFireBallComponent::DuplicateSubObjects(const UObject* Source)
 {
-    UPointLightComponent::DuplicateSubObjects(Source);
+    Super::DuplicateSubObjects(Source);
 }
 
 void UFireBallComponent::PostDuplicate()
 {
-    UPointLightComponent::PostDuplicate();
+    Super::PostDuplicate();
 }
