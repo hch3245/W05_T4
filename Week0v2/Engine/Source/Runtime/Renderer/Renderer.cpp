@@ -287,8 +287,12 @@ void FRenderer::Render(UWorld* World, std::shared_ptr<FEditorViewportClient> Act
     {
         RenderDepthVisualization(ActiveViewport);
     }
+    else {
+        // 일단은 DepthVisualization 안 하는 경우에만 Fog
+        RenderFogVisualization(ActiveViewport);
+    }
 
-    RenderFogVisualization();
+    
     
     RenderGizmos(World, ActiveViewport);
     ClearRenderArr();
@@ -742,7 +746,7 @@ void FRenderer::ReleaseFogResources()
     }
 }
 
-void FRenderer::PrepareFogVisualization()
+void FRenderer::PrepareFogVisualization(std::shared_ptr<FEditorViewportClient> ActiveViewport)
 {
     UINT Stride = sizeof(FVertexTexture);
     UINT Offset = 0;
@@ -766,20 +770,34 @@ void FRenderer::PrepareFogVisualization()
     Graphics->DeviceContext->OMSetBlendState(nullptr, nullptr, 0xFFFFFFFF);
 }
 
-void FRenderer::PrepareFogConstant()
+void FRenderer::PrepareFogConstant(std::shared_ptr<FEditorViewportClient> ActiveViewport)
 {
+    // Viewport 업데이트
+    float TotalWidth = Graphics->screenWidth;
+    float TotalHeight = Graphics->screenHeight;
+    
+    FViewportParamsConstant ViewportParamsConstant;
+    ViewportParamsConstant.ViewportScale.x = ActiveViewport->GetD3DViewport().Width / TotalWidth;
+    ViewportParamsConstant.ViewportScale.y = ActiveViewport->GetD3DViewport().Height / TotalHeight;
+
+    ViewportParamsConstant.ViewportOffset.x = ActiveViewport->GetD3DViewport().TopLeftX / TotalWidth;
+    ViewportParamsConstant.ViewportOffset.y = ActiveViewport->GetD3DViewport().TopLeftY / TotalHeight;
+
+    ConstantBufferUpdater.UpdateViewportParamsConstant(ViewportParamsConstantBuffer, ViewportParamsConstant);
+
     Graphics->DeviceContext->PSSetConstantBuffers(0, 1, &FogConstantBuffer);
+    Graphics->DeviceContext->PSSetConstantBuffers(1, 1, &ViewportParamsConstantBuffer);
 }
 
-void FRenderer::RenderFogVisualization()
+void FRenderer::RenderFogVisualization(std::shared_ptr<FEditorViewportClient> ActiveViewport)
 {
     UFogComponent* Fog = GEngine->GetWorld()->GetFogComponent();
     if (Fog) {
         ConstantBufferUpdater.UpdateFogConstant(FogConstantBuffer, GEngine->GetWorld()->GetFogComponent()->curFogConstant);
     }
     
-    PrepareFogVisualization();
-    PrepareFogConstant();
+    PrepareFogVisualization(ActiveViewport);
+    PrepareFogConstant(ActiveViewport);
     Graphics->DeviceContext->Draw(4, 0);
 
     ID3D11ShaderResourceView* nullSRV[1] = { nullptr };

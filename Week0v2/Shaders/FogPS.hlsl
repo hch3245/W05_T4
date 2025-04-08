@@ -10,6 +10,14 @@ cbuffer FogConstants : register(b0)
     float3 CameraWorldPos;
     float Pad2;
 }
+
+// 다중 Viewport 대응
+cbuffer CBViewportParams : register(b1)
+{
+    float2 ViewportScale;
+    float2 ViewportOffset;
+}
+
 Texture2D SceneColor : register(t0);
 // ScenePosition : 화면상의 픽셀마다 월드좌표가 저장도니 텍스처
 Texture2D ScenePosition : register(t1);
@@ -19,8 +27,10 @@ SamplerState LinearSampler : register(s0);
 
 float4 main(float4 pos : SV_POSITION, float2 uv : TEXCOORD) : SV_TARGET
 {
-    float3 worldPos = ScenePosition.Sample(LinearSampler, uv).rgb;
-    float depth = Depth.Sample(LinearSampler, uv).r;
+    float2 adjustedUV = uv * ViewportScale + ViewportOffset;
+    
+    float3 worldPos = ScenePosition.Sample(LinearSampler, adjustedUV).rgb;
+    float depth = Depth.Sample(LinearSampler, adjustedUV).r;
     // 해당 픽셀이 카메라에서 얼마나 떨어졌는지
     // length : 벡터의 유클리디안 거리
     float distance = length(worldPos - CameraWorldPos);
@@ -42,10 +52,10 @@ float4 main(float4 pos : SV_POSITION, float2 uv : TEXCOORD) : SV_TARGET
     float fogAmount = saturate(fogHeightFactor * FogDensity * fogDistanceFactor);
     
     
-    float3 sceneColor = SceneColor.Sample(LinearSampler, uv).rgb;
+    float3 sceneColor = SceneColor.Sample(LinearSampler, adjustedUV).rgb;
     
     float3 fogColor = pow(FogInscatteringColor.rgb, 2.2); // 감마 → 선형 변환
     
     float3 finalColor = lerp(sceneColor, fogColor, fogAmount);    
-    return float4(finalColor.rgb, 1.0f);
+    return float4(sceneColor.rgb, 1.0f);
 }

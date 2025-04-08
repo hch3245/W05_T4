@@ -159,9 +159,9 @@ private:
 
     void CreateFogResources();
     void ReleaseFogResources();
-    void PrepareFogVisualization();
-    void PrepareFogConstant();
-    void RenderFogVisualization();
+    void PrepareFogVisualization(std::shared_ptr<FEditorViewportClient> ActiveViewport);
+    void PrepareFogConstant(std::shared_ptr<FEditorViewportClient> ActiveViewport);
+    void RenderFogVisualization(std::shared_ptr<FEditorViewportClient> ActiveViewport);
 
 public:
     FRenderResourceManager& GetResourceManager() { return RenderResourceManager; }
