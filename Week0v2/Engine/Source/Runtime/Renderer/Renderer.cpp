@@ -306,8 +306,9 @@ void FRenderer::Render(UWorld* World, std::shared_ptr<FEditorViewportClient> Act
         RenderFogVisualization(ActiveViewport);
     }
 
-    
-    
+    ID3D11DepthStencilState* originalDepthState = Graphics->DepthStencilState;
+    Graphics->DeviceContext->OMSetDepthStencilState(originalDepthState, 0);
+
     RenderGizmos(World, ActiveViewport);
     ClearRenderArr();
 }
