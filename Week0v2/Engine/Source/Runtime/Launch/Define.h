@@ -325,6 +325,20 @@ struct FSubUVConstant
     float indexV;
 };
 
+struct FCameraNearFarConstant
+{
+    float NearPlane;
+    float FarPlane;
+    float pad0;
+    float pad1;
+};
+ struct FViewportParamsConstant
+ {
+     FVector2D ViewportScale; // 뷰포트 크기
+     FVector2D ViewportOffset; // 뷰포트 오프셋
+ };
+
+
 struct alignas(16) FFogConstants {
     float FogDensity;                   // 안개 밀도
     float FogHeightFalloff;             // 높이에 따른 안개 감쇠 정도

@@ -180,6 +180,8 @@ void FRenderer::CreateConstantBuffer()
     TextureConstantBufer = RenderResourceManager.CreateConstantBuffer(sizeof(FTextureConstants));
     LightingBuffer = RenderResourceManager.CreateConstantBuffer(sizeof(FLighting));
     FlagBuffer = RenderResourceManager.CreateConstantBuffer(sizeof(FLitUnlitConstants));
+    ViewportParamsConstantBuffer = RenderResourceManager.CreateConstantBuffer(sizeof(FViewportParamsConstant));  
+    CameraNearFarConstantBuffer = RenderResourceManager.CreateConstantBuffer(sizeof(FCameraNearFarConstant));
     FogConstantBuffer = RenderResourceManager.CreateConstantBuffer(sizeof(FFogConstants));
 }
 
@@ -273,18 +275,22 @@ void FRenderer::Render(UWorld* World, std::shared_ptr<FEditorViewportClient> Act
 
     if (ActiveViewport->GetShowFlag() & static_cast<uint64>(EEngineShowFlags::SF_Primitives))
         RenderStaticMeshes(World, ActiveViewport);
-    RenderGizmos(World, ActiveViewport);
+
+    
+
     if (ActiveViewport->GetShowFlag() & static_cast<uint64>(EEngineShowFlags::SF_BillboardText))
         RenderBillboards(World, ActiveViewport);
+
     RenderLight(World, ActiveViewport);
 
     if (ActiveViewport->GetViewMode() == EViewModeIndex::VMI_Depth)
     {
-        RenderDepthVisualization();
+        RenderDepthVisualization(ActiveViewport);
     }
 
     RenderFogVisualization();
     
+    RenderGizmos(World, ActiveViewport);
     ClearRenderArr();
 }
 
@@ -455,6 +461,8 @@ void FRenderer::RenderGizmos(const UWorld* World, const std::shared_ptr<FEditorV
     {
         return;
     }
+
+    PrepareShader();
 
 #pragma region GizmoDepth
     ID3D11DepthStencilState* DepthStateDisable = Graphics->DepthStateDisable;
@@ -815,7 +823,7 @@ void FRenderer::ReleaseDepthVisualizationResources()
     }
 }
 
-void FRenderer::PrepareDepthVisualization()
+void FRenderer::PrepareDepthVisualization(std::shared_ptr<FEditorViewportClient> ActiveViewport)
 {
     // 1. Render Target 설정 (GraphicsDevice에 함수를 만들어서 호출)
     Graphics->DeviceContext->OMSetRenderTargets(1, &Graphics->FrameBufferRTV, nullptr);
@@ -835,14 +843,39 @@ void FRenderer::PrepareDepthVisualization()
     Graphics->DeviceContext->PSSetSamplers(0, 1, &LinearSampler);
     Graphics->DeviceContext->PSSetShaderResources(0, 1, &(Graphics->DepthSRV));
 
+    if (CameraNearFarConstantBuffer && ViewportParamsConstantBuffer)
+    {
+        FCameraNearFarConstant CameraNearFarConstant;
+        CameraNearFarConstant.NearPlane = ActiveViewport->GetNearClip();
+        CameraNearFarConstant.FarPlane = ActiveViewport->GetFarClip();
+        // 카메라 Near/Far 값 업데이트
+        ConstantBufferUpdater.UpdateCameraNearFarConstant(CameraNearFarConstantBuffer, CameraNearFarConstant);
+
+        float TotalWidth = Graphics->screenWidth;
+        float TotalHeight = Graphics->screenHeight;
+
+        FViewportParamsConstant ViewportParamsConstant;
+        ViewportParamsConstant.ViewportScale.x = ActiveViewport->GetD3DViewport().Width / TotalWidth;
+        ViewportParamsConstant.ViewportScale.y = ActiveViewport->GetD3DViewport().Height / TotalHeight;
+
+        ViewportParamsConstant.ViewportOffset.x = ActiveViewport->GetD3DViewport().TopLeftX / TotalWidth;
+        ViewportParamsConstant.ViewportOffset.y = ActiveViewport->GetD3DViewport().TopLeftY / TotalHeight;
+
+        // 뷰포트 파라미터 업데이트
+        ConstantBufferUpdater.UpdateViewportParamsConstant(ViewportParamsConstantBuffer, ViewportParamsConstant);
+
+        Graphics->DeviceContext->PSSetConstantBuffers(0, 1, &CameraNearFarConstantBuffer);
+        Graphics->DeviceContext->PSSetConstantBuffers(1, 1, &ViewportParamsConstantBuffer);
+    }
+
     // 5. 상태 설정
     Graphics->DeviceContext->OMSetDepthStencilState(Graphics->DepthStateDisable, 1);
     Graphics->DeviceContext->OMSetBlendState(nullptr, nullptr, 0xFFFFFFFF);
 }
 
-void FRenderer::RenderDepthVisualization()
+void FRenderer::RenderDepthVisualization(std::shared_ptr<FEditorViewportClient> ActiveViewport)
 {
-    PrepareDepthVisualization();
+    PrepareDepthVisualization(ActiveViewport);
     
     // 렌더링
     Graphics->DeviceContext->Draw(4, 0);
