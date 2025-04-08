@@ -790,6 +790,8 @@ void FRenderer::PrepareFogConstant(std::shared_ptr<FEditorViewportClient> Active
 
     Graphics->DeviceContext->PSSetConstantBuffers(0, 1, &FogConstantBuffer);
     Graphics->DeviceContext->PSSetConstantBuffers(1, 1, &ViewportParamsConstantBuffer);
+
+    Graphics->DeviceContext->OMSetDepthStencilState(Graphics->DepthStateDisable, 1);
 }
 
 void FRenderer::RenderFogVisualization(std::shared_ptr<FEditorViewportClient> ActiveViewport)
@@ -803,7 +805,7 @@ void FRenderer::RenderFogVisualization(std::shared_ptr<FEditorViewportClient> Ac
     PrepareFogConstant(ActiveViewport);
     Graphics->DeviceContext->Draw(4, 0);
 
-    ID3D11ShaderResourceView* nullSRV[1] = { nullptr };
+    
     // FIXME : 사용 slot 확인후 해제해주기
     //Graphics -> DeviceContext -> PSSetShaderResources(0, 1, )
     // TODO : 빼도되는지 확인하기
@@ -812,6 +814,10 @@ void FRenderer::RenderFogVisualization(std::shared_ptr<FEditorViewportClient> Ac
     // 만약 FrameBufferRTV를 사용하지 않으면, ImGUI가 이상한 곳에 그리게 된다.
     // SwapChain의 BackBuffer가 아닌 곳에 그리게 되기에 ImGUI가 그려지지 않음
     Graphics->DeviceContext->OMSetRenderTargets(1, &Graphics->FrameBufferRTV, nullptr);
+
+    // 사용한 SRV 
+    ID3D11ShaderResourceView* nullSRV[1] = { nullptr };
+    Graphics->DeviceContext->PSSetShaderResources(0, 1, nullSRV);
 
 }
 
