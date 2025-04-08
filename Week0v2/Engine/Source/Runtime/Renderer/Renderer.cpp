@@ -21,6 +21,7 @@
 #include "UObject/UObjectIterator.h"
 #include "Components/SkySphereComponent.h"
 #include "Runtime/Launch/Define.h"
+#include "LevelEditor/SLevelEditor.h"
 
 
 void FRenderer::Initialize(FGraphicsDevice* graphics)
@@ -231,6 +232,9 @@ void FRenderer::PrepareRender()
                 if (ULightComponentBase* pLightComp = Cast<ULightComponentBase>(iter))
                 {
                     LightObjs.Add(pLightComp);
+                }
+                if (UFogComponent* pFogComp = Cast<UFogComponent>(iter)) {
+                    FogObjs.Add(pFogComp);
                 }
         }
     }
@@ -765,10 +769,16 @@ void FRenderer::PrepareFogConstant()
 
 void FRenderer::RenderFogVisualization()
 {
-    UFogComponent* Fog = GEngine->GetWorld()->GetFogComponent();
-    if (Fog) {
-        ConstantBufferUpdater.UpdateFogConstant(FogConstantBuffer, GEngine->GetWorld()->GetFogComponent()->curFogConstant);
-    }
+    TArray<UFogComponent*> Fogs = GEngine->renderer.FogObjs;
+   for (auto fog : Fogs) {
+        if (fog) {
+            fog->curFogConstant->CameraWorldPos = GEngine->GetLevelEditor()->GetActiveViewportClient()->ViewTransformPerspective.GetLocation();
+            fog->curFogConstant->FarClip = GEngine->GetLevelEditor()->GetActiveViewportClient()->GetFarClip();
+            fog->curFogConstant->InvProjection = FMatrix::Inverse(
+                GEngine->GetLevelEditor()->GetActiveViewportClient()->GetProjectionMatrix());
+            ConstantBufferUpdater.UpdateFogConstant(FogConstantBuffer,fog->curFogConstant);
+        }
+   }
     
     PrepareFogVisualization();
     PrepareFogConstant();

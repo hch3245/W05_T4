@@ -262,7 +262,8 @@ void ControlEditorPanel::CreateModifyButton(ImVec2 ButtonSize, ImFont* IconFont)
             { .label= "SpotLight", .obj= OBJ_SpotLight },
             { .label= "Particle",  .obj= OBJ_PARTICLE },
             { .label= "Text",      .obj= OBJ_Text },
-            { .label= "SkySphere", .obj= OBJ_SKYSPHERE }
+            { .label= "SkySphere", .obj= OBJ_SKYSPHERE },
+            {.label = "HeightFog", .obj = OBJ_HEIGHTFOG}
         };
 
         for (const auto& primitive : primitives)
@@ -337,6 +338,16 @@ void ControlEditorPanel::CreateModifyButton(ImVec2 ButtonSize, ImFont* IconFont)
                     }
 
                     break;
+                }
+                case OBJ_HEIGHTFOG:
+                {
+                    SpawnedActor = World->SpawnActor<AActor>();
+                    SpawnedActor->SetActorLabel(TEXT("OBJ_FOG"));
+                    if (SpawnedActor)
+                    {
+                        UFogComponent* FogComponent = SpawnedActor->AddComponent<UFogComponent>();
+                        FogComponent->CreateScreenQuadVertexBuffer();
+                    }
                 }
                 case OBJ_END:
                     break;

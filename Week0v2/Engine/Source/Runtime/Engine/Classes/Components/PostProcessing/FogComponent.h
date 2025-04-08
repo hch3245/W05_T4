@@ -1,10 +1,10 @@
 #pragma once
-#include "Runtime/Engine/Classes/Components/ActorComponent.h"
+#include "Runtime/Engine/Classes/Components/SceneComponent.h"
 #include "Runtime/Launch/Define.h"
 
-class UFogComponent : public UActorComponent 
+class UFogComponent : public USceneComponent 
 {
-    DECLARE_CLASS(UFogComponent, UActorComponent)
+    DECLARE_CLASS(UFogComponent, USceneComponent)
 
 public:
     UFogComponent();

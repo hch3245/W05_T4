@@ -56,7 +56,6 @@ private:
     USceneComponent* SelectedComponent = nullptr;
     USceneComponent* pickingGizmo = nullptr;
     AEditorPlayer* EditorPlayer = nullptr;
-    UFogComponent* FogComponent = nullptr;
     
 public:
     EWorldType::Type WorldType = EWorldType::None;
@@ -80,7 +79,6 @@ public:
     USceneComponent* GetPickingGizmo() const { return pickingGizmo; }
     void SetPickingGizmo(UObject* Object);
 
-    UFogComponent* GetFogComponent() const { return FogComponent; }
     // 임시
     bool IsPIEWorld() const;
     void BeginPlay();

@@ -39,28 +39,28 @@ float4 main(float4 pos : SV_POSITION, float2 uv : TEXCOORD) : SV_TARGET
     float rawFog = 1.0 - exp(-distance * FogDensity);
     float fogDistanceFactor = saturate((rawFog - StartDistance) / (FogCutoffDistance - StartDistance));
     
-    if (depth >= 1.0f)
-    {
-        float2 ndc = uv * 2.0 - 1.0;
-        ndc.y = -ndc.y;
+    //if (depth >= 1.0f)
+    //{
+    //    float2 ndc = uv * 2.0 - 1.0;
+    //    ndc.y = -ndc.y;
         
-        float4 clipPos = float4(ndc.x, ndc.y, 1.0f, 1.0f);
-        float4 viewPos = mul(clipPos, InvProjection);
+    //    float4 clipPos = float4(ndc.x, ndc.y, 1.0f, 1.0f);
+    //    float4 viewPos = mul(clipPos, InvProjection);
         
-        float3 viewDir = normalize(viewPos.xyz / viewPos.w);
+    //    float3 viewDir = normalize(viewPos.xyz / viewPos.w);
         
-        worldPos = CameraWorldPos + viewDir * FarClip;
-    }
+    //    worldPos = CameraWorldPos + viewDir * FarClip;
+    //}
     // 높이에 따른 감쇠 적용
    //float fogHeightFactor = exp(-FogHeightFalloff * worldPos.y);
     float fogHeightFactor = exp(-FogHeightFalloff * worldPos.z);
     // 최종 안개량
     //float fogAmount = saturate(fogHeightFactor * FogDensity * fogDistanceFactor);
     float fogAmount = saturate(fogDistanceFactor * fogHeightFactor);
-    
+    fogAmount = pow(fogAmount, 1.2);
     float3 sceneColor = SceneColor.Sample(LinearSampler, uv).rgb;
     
-    float3 fogColor = pow(FogInscatteringColor.rgb, 2.2); // 감마 → 선형 변환
+    float3 fogColor = pow(FogInscatteringColor.rgb, 2.2); // 감마 -> 선형 변환
     
     float3 finalColor = lerp(sceneColor, fogColor, fogAmount);    
     return float4(finalColor.rgb, 1.0f);
