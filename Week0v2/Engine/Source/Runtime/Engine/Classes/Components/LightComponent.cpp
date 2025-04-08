@@ -5,14 +5,12 @@
 
 ULightComponentBase::ULightComponentBase()
 {
-    // FString name = "SpotLight";
-    // SetName(name);
-    InitializeLight();
+    AABB.max = { 1.f,1.f,0.1f };
+    AABB.min = { -1.f,-1.f,-0.1f };
 }
 
 ULightComponentBase::~ULightComponentBase()
 {
-    delete texture2D;
 }
 void ULightComponentBase::SetColor(FVector4 newColor)
 {
@@ -34,29 +32,39 @@ void ULightComponentBase::SetRadius(float r)
     radius = r;
 }
 
+void ULightComponentBase::SetIntensity(float intensity)
+{
+    Intensity = intensity;
+}
+
+float ULightComponentBase::GetIntensity() const
+{
+    return Intensity;
+}
+
 void ULightComponentBase::InitializeLight()
 {
-    texture2D = new UBillboardComponent();
-    texture2D->SetTexture(L"Assets/Texture/spotLight.png");
-    texture2D->InitializeComponent();
-    AABB.max = { 1.f,1.f,0.1f };
-    AABB.min = { -1.f,-1.f,-0.1f };
-    color = { 1,1,1,1 };
-    radius = 5;
+}
+
+void ULightComponentBase::InitializeComponent()
+{
+    Super::InitializeComponent();
 }
 
 void ULightComponentBase::TickComponent(float DeltaTime)
 {
     Super::TickComponent(DeltaTime);
-
-    texture2D->TickComponent(DeltaTime);
-    texture2D->SetLocation(GetWorldLocation());
-
 }
 
 int ULightComponentBase::CheckRayIntersection(FVector& rayOrigin, FVector& rayDirection, float& pfNearHitDistance)
 {
     bool res =AABB.Intersect(rayOrigin, rayDirection, pfNearHitDistance);
     return res;
+}
+
+void ULightComponentBase::FillLightConstant(FLightConstants& outConstant)
+{
+    outConstant.Color = color;
+    outConstant.Intensity = Intensity;
 }
 

@@ -56,7 +56,7 @@ void UPrimitiveBatch::RenderBatch(ID3D11Buffer* ConstantBuffer, const FMatrix& V
     BoundingBoxes.Empty();
     Cones.Empty();
     OrientedBoundingBoxes.Empty();
-    UEditorEngine::renderer.PrepareShader();
+    //UEditorEngine::renderer.PrepareShader();
 }
 void UPrimitiveBatch::InitializeVertexBuffer()
 {

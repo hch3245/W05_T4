@@ -11,7 +11,7 @@
 #include "RenderResourceManager.h"
 #include "ShaderManager.h"
 #include "ConstantBufferUpdater.h"
-
+class FStructuredBuffer;
 class ULightComponentBase;
 class UWorld;
 class FGraphicsDevice;
@@ -172,5 +172,10 @@ private:
     FRenderResourceManager RenderResourceManager;
     FShaderManager ShaderManager;
     FConstantBufferUpdater ConstantBufferUpdater;
+private:
+    FStructuredBuffer* MultiLightStructured;
+    ID3D11Buffer* LightCountBuffer;
+    ID3D11Buffer* ModelBuffer;
+    void UpdateMultiLight();
 };
 

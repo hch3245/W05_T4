@@ -60,7 +60,7 @@ void FConstantBufferUpdater::UpdateLightConstant(ID3D11Buffer* LightingBuffer) c
         constants->lightColorX = 1.0f;
         constants->lightColorY = 1.0f;
         constants->lightColorZ = 1.0f;
-        constants->AmbientFactor = 0.06f;
+        constants->AmbientFactor = 0.0f;
     }
     DeviceContext->Unmap(LightingBuffer, 0);
 }
@@ -174,4 +174,35 @@ void FConstantBufferUpdater::UpdateFogConstant(ID3D11Buffer* buffer, FFogConstan
 
     //memcpy(mappedResource.pData, fogConstant, sizeof(FFogConstants));
     //DeviceContext->Unmap(buffer, 0);
+}
+
+void FConstantBufferUpdater::UpdateLightCountConstant(ID3D11Buffer* LightCountBuffer, int LightCount) const
+{
+    if (LightCountBuffer)
+    {
+        D3D11_MAPPED_SUBRESOURCE constantbufferMSR;
+
+        DeviceContext->Map(LightCountBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &constantbufferMSR); // update constant buffer every frame
+        auto constants = static_cast<int*>(constantbufferMSR.pData);
+        {
+            *constants = LightCount;
+        }
+        DeviceContext->Unmap(LightCountBuffer, 0);
+    }
+
+}
+
+void FConstantBufferUpdater::UpdateModelConstant(ID3D11Buffer* ModelBuffer, const FMatrix& Model) const
+{
+    if (ModelBuffer)
+    {
+        D3D11_MAPPED_SUBRESOURCE constantbufferMSR;
+
+        DeviceContext->Map(ModelBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &constantbufferMSR); // update constant buffer every frame
+        auto constants = static_cast<FMatrix*>(constantbufferMSR.pData);
+        {
+            *constants = Model;
+        }
+        DeviceContext->Unmap(ModelBuffer, 0);
+    }
 }

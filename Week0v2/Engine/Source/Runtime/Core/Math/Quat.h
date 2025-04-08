@@ -108,4 +108,32 @@ struct FQuat
 
 		return RotationMatrix;
 	}
+    FVector ToEulerDegrees() const
+    {
+        // 요건 간단한 YawPitchRoll 변환 공식
+        // 참고용. 정확한 구현 원하면 도와줄게!
+        float ysqr = y * y;
+
+        // roll (x-axis rotation)
+        float t0 = +2.0f * (w * x + y * z);
+        float t1 = +1.0f - 2.0f * (x * x + ysqr);
+        float roll = atan2f(t0, t1);
+
+        // pitch (y-axis rotation)
+        float t2 = +2.0f * (w * y - z * x);
+        t2 = t2 > 1.0f ? 1.0f : t2;
+        t2 = t2 < -1.0f ? -1.0f : t2;
+        float pitch = asinf(t2);
+
+        // yaw (z-axis rotation)
+        float t3 = +2.0f * (w * z + x * y);
+        float t4 = +1.0f - 2.0f * (ysqr + z * z);
+        float yaw = atan2f(t3, t4);
+
+        return FVector(
+            roll * (180.0f / 3.14159265f),
+            pitch * (180.0f / 3.14159265f),
+            yaw * (180.0f / 3.14159265f)
+        );
+    }
 };
