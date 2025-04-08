@@ -268,6 +268,9 @@ void FRenderer::Render(UWorld* World, std::shared_ptr<FEditorViewportClient> Act
     Graphics->ChangeRasterizer(ActiveViewport->GetViewMode());
     ChangeViewMode(ActiveViewport->GetViewMode());
     ConstantBufferUpdater.UpdateLightConstant(LightingBuffer);
+
+    Graphics->DeviceContext->OMSetRenderTargets(RTV_NUM, Graphics->RTVs, Graphics->DepthStencilView);
+
     UPrimitiveBatch::GetInstance().RenderBatch(ConstantBuffer, ActiveViewport->GetViewMatrix(), ActiveViewport->GetProjectionMatrix());
 
     
@@ -901,7 +904,6 @@ void FRenderer::RenderDepthVisualization(std::shared_ptr<FEditorViewportClient> 
     // 사용한 SRV 
     ID3D11ShaderResourceView* nullSRV[1] = { nullptr };
     Graphics->DeviceContext->PSSetShaderResources(0, 1, nullSRV);
-    Graphics->DeviceContext->OMSetRenderTargets(2, Graphics->RTVs, Graphics->DepthStencilView);
 
 }
 
