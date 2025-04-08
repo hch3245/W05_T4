@@ -1,6 +1,8 @@
 #include "GraphicDevice.h"
 #include "EditorEngine.h"
 #include <wchar.h>
+#include "Editor/UnrealEd/EditorViewportClient.h"
+
 void FGraphicsDevice::Initialize(HWND hWindow) {
     CreateDeviceAndSwapChain(hWindow);
     CreateFrameBuffer();
@@ -553,4 +555,23 @@ uint32 FGraphicsDevice::DecodeUUIDColor(FVector4 UUIDColor) {
     uint32_t X = static_cast<uint32_t>(UUIDColor.x);
 
     return W | Z | Y | X;
+}
+
+void FGraphicsDevice::SetDefaultSetting(std::shared_ptr<FEditorViewportClient> ActiveViewport)
+{
+    DeviceContext->RSSetViewports(1, &ActiveViewport->GetD3DViewport());
+    DeviceContext->OMSetRenderTargets(RTV_NUM, RTVs, DepthStencilView);
+
+    ID3D11ShaderResourceView* nullSRV[1] = { nullptr };
+    DeviceContext->PSSetShaderResources(0, 1, nullSRV);
+
+    ID3D11SamplerState* nullSampler[1] = { nullptr };
+    DeviceContext->PSSetSamplers(0, 1, nullSampler);
+
+    DeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+    DeviceContext->OMSetDepthStencilState(DepthStencilState, 0);
+
+    DeviceContext->RSSetState(CurrentRasterizer);
+
 }

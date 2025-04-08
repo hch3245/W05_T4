@@ -283,34 +283,44 @@ void FRenderer::Render(UWorld* World, std::shared_ptr<FEditorViewportClient> Act
 
     Graphics->DeviceContext->OMSetRenderTargets(RTV_NUM, Graphics->RTVs, Graphics->DepthStencilView);
 
+    Graphics->SetDefaultSetting(ActiveViewport);
     UPrimitiveBatch::GetInstance().RenderBatch(ConstantBuffer, ActiveViewport->GetViewMatrix(), ActiveViewport->GetProjectionMatrix());
 
     
-    
-
-    if (ActiveViewport->GetShowFlag() & static_cast<uint64>(EEngineShowFlags::SF_Primitives))
+    if (ActiveViewport->GetShowFlag() & static_cast<uint64>(EEngineShowFlags::SF_Primitives)) 
+    {
+        Graphics->SetDefaultSetting(ActiveViewport);
         RenderStaticMeshes(World, ActiveViewport);
+    }
 
-    
-
-    if (ActiveViewport->GetShowFlag() & static_cast<uint64>(EEngineShowFlags::SF_BillboardText))
+    if (ActiveViewport->GetShowFlag() & static_cast<uint64>(EEngineShowFlags::SF_BillboardText)) 
+    {
+        Graphics->SetDefaultSetting(ActiveViewport);
         RenderBillboards(World, ActiveViewport);
+    }
+        
     //RenderLight(World, ActiveViewport);
 
     if (ActiveViewport->GetViewMode() == EViewModeIndex::VMI_Depth)
     {
+        Graphics->SetDefaultSetting(ActiveViewport);
         RenderDepthVisualization(ActiveViewport);
     }
     else {
-        // 일단은 DepthVisualization 안 하는 경우에만 Fog
+        // DepthVisualization 하는 경우에는 Fog 제거
+        Graphics->SetDefaultSetting(ActiveViewport);
         RenderFogVisualization(ActiveViewport);
     }
 
     ID3D11DepthStencilState* originalDepthState = Graphics->DepthStencilState;
     Graphics->DeviceContext->OMSetDepthStencilState(originalDepthState, 0);
 
+    // Gizmo의 경우 FrameBuffer에 바로 Render해주어야함
+    // 다른 PostProcess의 영향도 안 받을 오브젝트이면서도
+    // 맨 마지막에 그려지기 때문에
     RenderGizmos(World, ActiveViewport);
     ClearRenderArr();
+
 }
 
 void FRenderer::RenderPrimitive(ID3D11Buffer* pBuffer, UINT numVertices) const
