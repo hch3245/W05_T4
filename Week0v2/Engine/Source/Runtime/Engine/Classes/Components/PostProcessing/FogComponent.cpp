@@ -14,11 +14,11 @@ UFogComponent::UFogComponent()
     //FIXME : 임시 초기화 값.
     curFogConstant = new FFogConstants();
 
-    curFogConstant->FogDensity = 0.9f;
+    curFogConstant->FogDensity = 0.5f;
     curFogConstant->FogHeightFalloff = 0.03f;
     curFogConstant->StartDistance = 0.0f;
-    curFogConstant->FogCutOffDistance = 50.0f;
-    curFogConstant->FogMaxOpacity = 0.9f;
+    curFogConstant->FogCutOffDistance = 10.0f;
+    curFogConstant->FogMaxOpacity = 0.5f;
     curFogConstant->FogInScatteringColor = FVector4(1.0f, 0.3f, 0.2f, 1.0f);
 }
 
@@ -62,4 +62,7 @@ void UFogComponent::CreateScreenQuadVertexBuffer()
 void UFogComponent::TickComponent(float DeltaTime)
 {
     curFogConstant->CameraWorldPos = GEngine->GetLevelEditor()->GetActiveViewportClient()->ViewTransformPerspective.GetLocation();
+    curFogConstant->FarClip = GEngine->GetLevelEditor()->GetActiveViewportClient()->GetFarClip();
+    curFogConstant->InvProjection = FMatrix::Inverse(
+        GEngine->GetLevelEditor()->GetActiveViewportClient()->GetProjectionMatrix());
 }
