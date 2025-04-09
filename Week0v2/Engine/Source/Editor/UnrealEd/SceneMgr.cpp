@@ -151,6 +151,29 @@ std::string FSceneMgr::SerializeSceneData(const SceneData& sceneData)
     j["Version"] = sceneData.Version;
     j["NextUUID"] = sceneData.NextUUID;
 
+
+    // 일단 활성화된 viewport 하나만 Camera 정보 넣기
+    // TODO: 다중 Viewport에 대한 처리
+    std::shared_ptr<FEditorViewportClient> activeViewportClient = GEngine->GetLevelEditor()->GetActiveViewportClient();
+
+    // activeViewportClient의 현재 상태를 추출합니다.
+    FVector loc = activeViewportClient->ViewTransformPerspective.GetLocation();
+    FVector rot = activeViewportClient->ViewTransformPerspective.GetRotation();
+    float fov = activeViewportClient->GetViewFOV();
+    float nearClip = activeViewportClient->GetNearClip();
+    float farClip = activeViewportClient->GetFarClip();
+
+    // PerspectiveCamera에 해당하는 JSON 객체 생성 (각 속성은 배열 형태로 구성)
+    json perspectiveCameraJson;
+    perspectiveCameraJson["Location"] = { loc.x, loc.y, loc.z };
+    perspectiveCameraJson["Rotation"] = { rot.x, rot.y, rot.z };
+    perspectiveCameraJson["FOV"] = { fov };
+    perspectiveCameraJson["NearClip"] = { nearClip };
+    perspectiveCameraJson["FarClip"] = { farClip };
+
+    // 최종 JSON 객체에 PerspectiveCamera 추가
+    j["PerspectiveCamera"] = perspectiveCameraJson;
+
     // Primitives 처리 (C++17 스타일)
     for (const auto& [Id, Obj] : sceneData.PrimitiveActors)
     {
@@ -194,7 +217,10 @@ std::string FSceneMgr::SerializeSceneData(const SceneData& sceneData)
 					std::string sPathName = ConvertFWStringToString(ObjPathName);
 
 					j["Primitives"][std::to_string(Id)] = {
-						{"ObjStaticMeshAsset", sPathName},
+                        {"Location", Location},
+                        {"Rotation", Rotation},
+                        {"Scale", Scale},
+                        {"ObjStaticMeshAsset", sPathName},
 						{"Type", "StaticMeshComp"}
 					};
 				}
