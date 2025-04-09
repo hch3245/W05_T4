@@ -425,11 +425,11 @@ void PropertyEditorPanel::Render()
             {
                 PJMVComp->SetDirection(Direction);
             }
-            if (ImGui::DragFloat("Speed", &InitialSpeed, 1.0f, 0.0f, 1000.0f, "%.3f"))
+            if (ImGui::DragFloat("Speed", &InitialSpeed, 1.0f, 0.0f, 1000.0f, "%.0f"))
             {
                 PJMVComp->SetInitialSpeed(InitialSpeed);
             }
-            if (ImGui::DragFloat("LifeTime", &MaxLifeTime, 0.01f,0.0f, 300.0f, "%.1f"))
+            if (ImGui::DragFloat("LifeTime", &MaxLifeTime, 1.0f,0.0f, 300.0f, "%.0f"))
             {
                 PJMVComp->SetMaxLifeTime(MaxLifeTime);
             }
