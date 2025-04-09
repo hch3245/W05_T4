@@ -8,6 +8,7 @@
 #include "Components/StaticMeshComponent.h"
 #include "Components/UBillboardComponent.h"
 #include "Components/UParticleSubUVComp.h"
+#include "Components/SkySphereComponent.h"
 #include "Components/UText.h"
 #include "Components/Material/Material.h"
 #include "D3D11RHI/GraphicDevice.h"
@@ -261,7 +262,7 @@ void FRenderer::PrepareRender()
             {
                 if (UStaticMeshComponent* pStaticMeshComp = Cast<UStaticMeshComponent>(iter2))
                 {
-                    if (!Cast<UGizmoBaseComponent>(iter2))
+                    if (!Cast<UGizmoBaseComponent>(iter2)&&!Cast<USkySphereComponent>(iter2))
                         StaticMeshObjs.Add(pStaticMeshComp);
                 }
                 if (UBillboardComponent* pBillboardComp = Cast<UBillboardComponent>(iter2))
@@ -271,6 +272,9 @@ void FRenderer::PrepareRender()
                 if (ULightComponentBase* pLightComp = Cast<ULightComponentBase>(iter2))
                 {
                     LightObjs.Add(pLightComp);
+                }
+                if (USkySphereComponent* pSkyComp = Cast<USkySphereComponent>(iter2)) {
+                    SkySphereObjs.Add(pSkyComp);
                 }
             }
         }
@@ -322,7 +326,9 @@ void FRenderer::Render(UWorld* World, std::shared_ptr<FEditorViewportClient> Act
     // Gizmo의 경우 FrameBuffer에 바로 Render해주어야함
     // 다른 PostProcess의 영향도 안 받을 오브젝트이면서도
     // 맨 마지막에 그려지기 때문에
+    RenderSkySphere(World, ActiveViewport);
     RenderGizmos(World, ActiveViewport);
+   
     ClearRenderArr();
 
 }
@@ -593,6 +599,54 @@ void FRenderer::RenderBillboards(UWorld* World, std::shared_ptr<FEditorViewportC
         }
     }
     PrepareShader();
+}
+
+void FRenderer::RenderSkySphere(const UWorld* World,std::shared_ptr<FEditorViewportClient> ActiveViewport)
+{
+    PrepareShader();
+
+    for (auto SkyComp : SkySphereObjs) {
+        FMatrix Model = JungleMath::CreateModelMatrix(
+            SkyComp->GetWorldLocation(),
+            SkyComp->GetWorldRotation(),
+            SkyComp->GetWorldScale()
+        );
+        // 최종 MVP 행렬
+        FMatrix MVP = Model * ActiveViewport->GetViewMatrix() * ActiveViewport->GetProjectionMatrix();
+        // 노말 회전시 필요 행렬
+        FMatrix NormalMatrix = FMatrix::Transpose(FMatrix::Inverse(Model));
+        FVector4 UUIDColor = SkyComp->EncodeUUID() / 255.0f;
+        ConstantBufferUpdater.UpdateModelConstant(ModelBuffer, Model);
+        if (World->GetSelectedActor() == SkyComp->GetOwner())
+        {
+            ConstantBufferUpdater.UpdateConstant(ConstantBuffer, Model, MVP, NormalMatrix, UUIDColor, true);
+        }
+        else
+            ConstantBufferUpdater.UpdateConstant(ConstantBuffer, Model, MVP, NormalMatrix, UUIDColor, false);
+
+        if (USkySphereComponent* skysphere = Cast<USkySphereComponent>(SkyComp))
+        {
+            ConstantBufferUpdater.UpdateTextureConstant(TextureConstantBufer, skysphere->UOffset, skysphere->VOffset);
+        }
+        else
+        {
+            ConstantBufferUpdater.UpdateTextureConstant(TextureConstantBufer, 0, 0);
+        }
+
+        UPrimitiveBatch::GetInstance().RenderAABB(
+            SkyComp->GetBoundingBox(),
+            SkyComp->GetWorldLocation(),
+            Model
+        );
+
+
+        if (!SkyComp->GetStaticMesh()) continue;
+
+        OBJ::FStaticMeshRenderData* renderData = SkyComp->GetStaticMesh()->GetRenderData();
+        if (renderData == nullptr) continue;
+
+        RenderPrimitive(renderData, SkyComp->GetStaticMesh()->GetMaterials(), SkyComp->GetOverrideMaterials(), SkyComp->GetselectedSubMeshIndex());
+    }
 }
 
 void FRenderer::CreateDepthVisualizationResources()
