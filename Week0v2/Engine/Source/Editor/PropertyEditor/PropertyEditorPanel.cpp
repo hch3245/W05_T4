@@ -425,11 +425,11 @@ void PropertyEditorPanel::Render()
             {
                 PJMVComp->SetDirection(Direction);
             }
-            if (ImGui::DragFloat("Initial Speed", &InitialSpeed, 0.01f, 0.0f, 1000.0f, "%.3f"))
+            if (ImGui::DragFloat("Speed", &InitialSpeed, 1.0f, 0.0f, 1000.0f, "%.3f"))
             {
                 PJMVComp->SetInitialSpeed(InitialSpeed);
             }
-            if (ImGui::SliderFloat("Max Life Time", &MaxLifeTime, 0.0f, 300.0f, "%.1f"))
+            if (ImGui::DragFloat("LifeTime", &MaxLifeTime, 0.01f,0.0f, 300.0f, "%.1f"))
             {
                 PJMVComp->SetMaxLifeTime(MaxLifeTime);
             }
@@ -440,20 +440,20 @@ void PropertyEditorPanel::Render()
     if (PickedActor && PickedComponent && PickedComponent->IsA<URotationMovementComponent>()) {
         URotationMovementComponent* RTMVComp = Cast<URotationMovementComponent>(PickedComponent);
         if (ImGui::TreeNodeEx("URotationMovement Component", ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_DefaultOpen)) { // 트리 노드 생성
-            float PitchSpeed = RTMVComp->GetPitchSpeed();
-            float YawSpeed = RTMVComp->GetYawSpeed();
-            float RollSpeed = RTMVComp->GetRollSpeed();
-            if (ImGui::DragFloat("Pitch Speed", &PitchSpeed, 0.01f, 0.0f, 1000.0f, "%.3f"))
+            float PitchSpeed = RTMVComp->GetPitchSpeed() * (180.0f / 3.1415926f);
+            float YawSpeed = RTMVComp->GetYawSpeed() * (180.0f / 3.1415926f);
+            float RollSpeed = RTMVComp->GetRollSpeed() * (180.0f / 3.1415926f);
+            if (ImGui::DragFloat("Pitch Speed", &PitchSpeed, 1.0f, -180.0f, 180.0f, "%.1f"))
             {
-                RTMVComp->SetPitchSpeed(PitchSpeed);
+                RTMVComp->SetPitchSpeed(PitchSpeed * (3.1415926f / 180.0f));
             }
-            if (ImGui::DragFloat("Yaw Speed", &YawSpeed, 0.01f, 0.0f, 1000.0f, "%.3f"))
+            if (ImGui::DragFloat("Yaw Speed", &YawSpeed, 1.0f, -180.0f, 180.0f, "%.1f"))
             {
-                RTMVComp->SetYawSpeed(YawSpeed);
+                RTMVComp->SetYawSpeed(YawSpeed * (3.1415926f / 180.0f));
             }
-            if (ImGui::DragFloat("Roll Speed", &RollSpeed, 0.01f, 0.0f, 1000.0f, "%.3f"))
+            if (ImGui::DragFloat("Roll Speed", &RollSpeed, 1.0f, -180.0f, 180.0f, "%.1f"))
             {
-                RTMVComp->SetPitchSpeed(RollSpeed);
+                RTMVComp->SetRollSpeed(RollSpeed * (3.1415926f / 180.0f));
             }
 
             ImGui::TreePop();

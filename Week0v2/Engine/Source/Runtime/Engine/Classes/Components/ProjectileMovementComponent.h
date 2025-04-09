@@ -22,7 +22,7 @@ public:
     float GetLifeTime() const;
 private:
     FVector Direction;
-    float InitialSpeed = 0.001f;   // 유닛당 초당 거리
+    float InitialSpeed = 10.0f;   // 유닛당 초당 거리
     float MaxLifeTime = 100.0f;       // 초
     float LifeTime = 0.0f;
 public:

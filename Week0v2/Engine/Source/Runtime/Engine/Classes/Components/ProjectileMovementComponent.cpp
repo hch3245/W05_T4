@@ -33,7 +33,7 @@ void UProjectileMovementComponent::TickComponent(float DeltaTime)
     {
         if (LifeTime <= MaxLifeTime)
         {
-            FVector DeltaMove = Direction * InitialSpeed * DeltaTime;
+            FVector DeltaMove = Direction * InitialSpeed * DeltaTime*0.0001;
             FVector currentLocation = owner->GetActorLocation();
             FVector NewLocation = currentLocation + DeltaMove;
             owner->SetActorLocation(NewLocation);

@@ -16,9 +16,9 @@ URotationMovementComponent::~URotationMovementComponent()
 
 void URotationMovementComponent::TickComponent(float DeltaTime)
 {
-    FQuat QuatPitch(FVector(1, 0, 0), PitchSpeed * DeltaTime); // X축 회전
-    FQuat QuatYaw(FVector(0, 0, 1), YawSpeed * DeltaTime);     // Z축 회전
-    FQuat QuatRoll(FVector(0, 1, 0), RollSpeed * DeltaTime);   // Y축 회전
+    FQuat QuatPitch(FVector(1, 0, 0), PitchSpeed * DeltaTime/100); // X축 회전
+    FQuat QuatYaw(FVector(0, 0, 1), YawSpeed * DeltaTime/100);     // Z축 회전
+    FQuat QuatRoll(FVector(0, 1, 0), RollSpeed * DeltaTime/100);   // Y축 회전
 
     FQuat DeltaRotation = QuatRoll * QuatPitch * QuatYaw;
 
