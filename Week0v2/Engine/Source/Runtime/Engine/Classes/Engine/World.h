@@ -53,7 +53,7 @@ private:
     /** World에서 관리되는 모든 Actor의 목록 */
     /** Actor가 Spawn되었고, 아직 BeginPlay가 호출되지 않은 Actor들 */
     AActor* SelectedActor = nullptr;
-    USceneComponent* SelectedComponent = nullptr;
+    UActorComponent* SelectedComponent = nullptr;
     USceneComponent* pickingGizmo = nullptr;
     AEditorPlayer* EditorPlayer = nullptr;
     
@@ -70,8 +70,8 @@ public:
         SelectedActor = InActor;
     }
 
-    USceneComponent* GetSelectedComponent() const { return SelectedComponent; }
-    void SetPickedComponent(USceneComponent* InComponent)
+    UActorComponent* GetSelectedComponent() const { return SelectedComponent; }
+    void SetPickedComponent(UActorComponent* InComponent)
     {
         SelectedComponent = InComponent;
     }

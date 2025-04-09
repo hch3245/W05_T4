@@ -47,10 +47,8 @@ void PropertyEditorPanel::Render()
     
     AEditorPlayer* player = GEngine->GetWorld()->GetEditorPlayer();
     AActor* PickedActor = GEngine->GetWorld()->GetSelectedActor();
-    USceneComponent* PickedSceneComponent = GEngine->GetWorld()->GetSelectedComponent();
-    //PickedComponent = PickedSceneComponent; // 프로퍼티 외에서 피킹을 한 경우 프로퍼티도 적용 되도록
-    if (PickedComponent == nullptr && PickedSceneComponent != nullptr)
-        PickedComponent = PickedSceneComponent;
+    
+    PickedComponent = GEngine->GetWorld()->GetSelectedComponent(); // 프로퍼티 외에서 피킹을 한 경우 프로퍼티도 적용 되도록
 
     // TODO: 추후에 RTTI를 이용해서 프로퍼티 출력하기
     if (PickedActor)
@@ -174,16 +172,7 @@ void PropertyEditorPanel::Render()
             ImGui::TreePop();
         }
         if (PickedComponent) {
-            if (PickedComponent->IsA<USceneComponent>())
-            {
-                PickedSceneComponent = Cast<USceneComponent>(PickedComponent);
-                GEngine->GetWorld()->SetPickedComponent(PickedSceneComponent);
-            }
-            else
-            {
-                USceneComponent* root = PickedComponent->GetOwner()->GetRootComponent();
-                GEngine->GetWorld()->SetPickedComponent(root);
-            }
+            GEngine->GetWorld()->SetPickedComponent(PickedComponent);
         }
     }
 
