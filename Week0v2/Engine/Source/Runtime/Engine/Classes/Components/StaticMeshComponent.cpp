@@ -136,5 +136,14 @@ void UStaticMeshComponent::PostDuplicate() {}
 void UStaticMeshComponent::TickComponent(float DeltaTime)
 {
     Timer += DeltaTime * 0.005f;
-    //SetLocation(GetWorldLocation()+ (FVector(1.0f,1.0f, 1.0f) * sin(Timer)));
+    if (AttachParent) 
+    {
+        // 부모가 있으면 부모가 움직이는거 따라가기만 하면 되므로
+        // 아무 것도 안해도 됨
+    }
+    else 
+    {
+        SetLocation(GetWorldLocation() + (FVector(1.0f, 1.0f, 1.0f) * sin(Timer)));
+    }
+    
 }
