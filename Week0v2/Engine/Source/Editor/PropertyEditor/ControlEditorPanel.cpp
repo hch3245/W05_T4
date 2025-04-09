@@ -270,6 +270,7 @@ void ControlEditorPanel::CreateModifyButton(ImVec2 ButtonSize, ImFont* IconFont)
             { .label= "FireBall",  .obj= OBJ_FireBall },
             { .label= "SkySphere", .obj= OBJ_SKYSPHERE },
             {.label = "HeightFog", .obj = OBJ_HEIGHTFOG},
+            {.label = "Igloo", .obj = OBJ_IGLOO}, 
             {.label = "Iceberg", .obj = OBJ_ICEBERG}
         };
         
@@ -378,6 +379,15 @@ void ControlEditorPanel::CreateModifyButton(ImVec2 ButtonSize, ImFont* IconFont)
                     UStaticMeshComponent* MeshComp = TempActor->GetStaticMeshComponent();
                     FManagerOBJ::CreateStaticMesh("Assets/Iceberg.obj");
                     MeshComp->SetStaticMesh(FManagerOBJ::GetStaticMesh(L"Iceberg.obj"));
+                    break;
+                }
+                case OBJ_IGLOO:
+                {
+                    AStaticMeshActor* TempActor = World->SpawnActor<AStaticMeshActor>();
+                    TempActor->SetActorLabel(TEXT("OBJ_IGLOO"));
+                    UStaticMeshComponent* MeshComp = TempActor->GetStaticMeshComponent();
+                    FManagerOBJ::CreateStaticMesh("Assets/igloo.obj");
+                    MeshComp->SetStaticMesh(FManagerOBJ::GetStaticMesh(L"igloo.obj"));
                     break;
                 }
                 case OBJ_END:
