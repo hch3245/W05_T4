@@ -30,8 +30,10 @@ SamplerState LinearSampler : register(s0);
 
 float4 main(float4 pos : SV_POSITION, float2 uv : TEXCOORD) : SV_TARGET
 {
+    float2 adjustUV = uv * ViewportScale + ViewportOffset;
+    
     // 픽셀의 월드 좌표와 카메라 간의 거리 계산
-    float3 worldPos = ScenePosition.Sample(LinearSampler, uv).rgb;
+    float3 worldPos = ScenePosition.Sample(LinearSampler, adjustUV).rgb;
     float3 viewDir = worldPos - CameraWorldPos;
     float distance = length(viewDir);
 
@@ -64,7 +66,7 @@ float4 main(float4 pos : SV_POSITION, float2 uv : TEXCOORD) : SV_TARGET
     // 4. 색상 보간 및 최종 색상 계산
     //    - FogInscatteringColor는 감마 보정 후 선형 공간으로 변환
     float3 fogColor = pow(FogInscatteringColor.rgb, 2.2);
-    float3 sceneColor = SceneColor.Sample(LinearSampler, uv).rgb;
+    float3 sceneColor = SceneColor.Sample(LinearSampler, adjustUV).rgb;
     
     //    - 원래 장면 색과 안개 색을 fogAmount만큼 보간
     float3 finalColor = lerp(sceneColor, fogColor, fogAmount);
