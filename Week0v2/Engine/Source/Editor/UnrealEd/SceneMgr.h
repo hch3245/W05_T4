@@ -6,7 +6,7 @@ class UObject;
 struct SceneData {
     int32 Version;
     int32 NextUUID;
-    TMap<int32, UObject*> Primitives;
+    TMap<int32, UObject*> PrimitiveActors;
     TMap<int32, UObject*> Cameras;
 };
 class FSceneMgr
@@ -16,5 +16,7 @@ public:
     static FString LoadSceneFromFile(const FString& filename);
     static std::string SerializeSceneData(const SceneData& sceneData);
     static bool SaveSceneToFile(const FString& filename, const SceneData& sceneData);
+
+	static std::string ConvertFWStringToString(const FWString& InFWString);	// 임시로 변환 함수
 };
 

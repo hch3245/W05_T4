@@ -135,6 +135,8 @@ void ControlEditorPanel::CreateMenuButton(ImVec2 ButtonSize, ImFont* IconFont)
 
             // TODO: Save Scene
 
+            GEngine->GetWorld()->SaveScene(FileName);
+
             tinyfd_messageBox("알림", "저장되었습니다.", "ok", "info", 1);
         }
 

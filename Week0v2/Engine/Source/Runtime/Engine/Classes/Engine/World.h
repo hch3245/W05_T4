@@ -32,6 +32,7 @@ public:
     void Release();
     void ReloadScene(const FString& FileName);
     void ClearScene();
+    void SaveScene(const FString& FileName);
     virtual UObject* Duplicate() const override;
     virtual void DuplicateSubObjects(const UObject* SourceObj) override;
     virtual void PostDuplicate() override;

@@ -115,6 +115,24 @@ void UWorld::ClearScene()
     ReleaseBaseObject();
 }
 
+void UWorld::SaveScene(const FString& FileName)
+{
+    SceneData sceneData;
+    sceneData.Version = 0;
+    sceneData.NextUUID = UEngineStatics::NextUUID;
+    TSet<AActor*>& ActorSet = Level->GetActors();
+
+    int32 idx = 0;
+    for (AActor* Actor : ActorSet) 
+    {
+        sceneData.PrimitiveActors.Add(idx, static_cast<UObject*>(Actor));
+        ++idx;
+    }
+    sceneData.Cameras; // 카메라 작업 필요~
+
+    GEngine->GetSceneManager()->SaveSceneToFile(FileName, sceneData);
+}
+
 UObject* UWorld::Duplicate() const
 {
     UWorld* CloneWorld = FObjectFactory::ConstructObjectFrom<UWorld>(this);
