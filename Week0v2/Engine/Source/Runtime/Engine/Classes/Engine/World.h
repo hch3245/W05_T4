@@ -69,7 +69,11 @@ public:
     AActor* GetSelectedActor() const { return SelectedActor; }
     void SetPickedActor(AActor* InActor)
     {
-        
+        if (Cast<USkySphereComponent>(InActor->GetRootComponent())) {
+            SelectedActor = NULL;
+            SelectedComponent = NULL;
+            return;
+        }
         SelectedActor = InActor;
     }
 
