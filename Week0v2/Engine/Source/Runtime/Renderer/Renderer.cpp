@@ -288,7 +288,7 @@ void FRenderer::Render(UWorld* World, std::shared_ptr<FEditorViewportClient> Act
     Graphics->DeviceContext->OMSetRenderTargets(RTV_NUM, Graphics->RTVs, Graphics->DepthStencilView);
 
     Graphics->SetDefaultSetting(ActiveViewport);
-    UPrimitiveBatch::GetInstance().RenderBatch(ConstantBuffer, ActiveViewport->GetViewMatrix(), ActiveViewport->GetProjectionMatrix());
+    UPrimitiveBatch::GetInstance().RenderBatch(ConstantBuffer, ActiveViewport->GetViewMatrix(), ActiveViewport->GetProjectionMatrix(), ActiveViewport);
 
     
     if (ActiveViewport->GetShowFlag() & static_cast<uint64>(EEngineShowFlags::SF_Primitives)) 
@@ -470,14 +470,11 @@ void FRenderer::RenderStaticMeshes(UWorld* World, std::shared_ptr<FEditorViewpor
             ConstantBufferUpdater.UpdateTextureConstant(TextureConstantBufer, 0, 0);
         }
 
-        if (ActiveViewport->GetShowFlag() & static_cast<uint64>(EEngineShowFlags::SF_AABB))
-        {
-            UPrimitiveBatch::GetInstance().RenderAABB(
-                StaticMeshComp->GetBoundingBox(),
-                StaticMeshComp->GetWorldLocation(),
-                Model
-            );
-        }
+        UPrimitiveBatch::GetInstance().RenderAABB(
+            StaticMeshComp->GetBoundingBox(),
+            StaticMeshComp->GetWorldLocation(),
+            Model
+        );
 
 
         if (!StaticMeshComp->GetStaticMesh()) continue;

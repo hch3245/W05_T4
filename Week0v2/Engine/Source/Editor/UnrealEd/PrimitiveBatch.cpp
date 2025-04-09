@@ -1,6 +1,8 @@
 #include "PrimitiveBatch.h"
 #include "EditorEngine.h"
 #include "UnrealEd/EditorViewportClient.h"
+#include "Editor/PropertyEditor/ShowFlags.h"
+
 extern UEditorEngine* GEngine;
 
 UPrimitiveBatch::UPrimitiveBatch()
@@ -33,8 +35,10 @@ void UPrimitiveBatch::GenerateGrid(float spacing, int gridCount)
     GridParam.gridOrigin = { 0,0,0 };
 }
 
-void UPrimitiveBatch::RenderBatch(ID3D11Buffer* ConstantBuffer, const FMatrix& View, const FMatrix& Projection)
+void UPrimitiveBatch::RenderBatch(ID3D11Buffer* ConstantBuffer, const FMatrix& View, const FMatrix& Projection, std::shared_ptr<FEditorViewportClient> ActiveViewport)
 {
+
+
     UEditorEngine::renderer.PrepareLineShader();
 
     InitializeVertexBuffer();
@@ -45,7 +49,7 @@ void UPrimitiveBatch::RenderBatch(ID3D11Buffer* ConstantBuffer, const FMatrix& V
     UEditorEngine::renderer.GetConstantBufferUpdater().UpdateConstant(ConstantBuffer, Model, MVP, NormalMatrix, FVector4(0, 0, 0, 0), false);
     UEditorEngine::renderer.UpdateGridConstantBuffer(GridParam);
 
-    UpdateBoundingBoxResources();
+    UpdateBoundingBoxResources(ActiveViewport);
     UpdateConeResources();
     UpdateOBBResources();
     int boundingBoxSize = static_cast<int>(BoundingBoxes.Num());
@@ -66,8 +70,14 @@ void UPrimitiveBatch::InitializeVertexBuffer()
         pVertexBuffer = UEditorEngine::renderer.GetResourceManager().CreateVertexBuffer(vertices, 2);
 }
 
-void UPrimitiveBatch::UpdateBoundingBoxResources()
+void UPrimitiveBatch::UpdateBoundingBoxResources(std::shared_ptr<FEditorViewportClient> ActiveViewport)
 {
+
+    if (!(ActiveViewport->GetShowFlag() & static_cast<uint64>(EEngineShowFlags::SF_AABB))) {
+        // AABB Flag가 꺼져 있는 경우 BoundingBox를 Empty로 하여 그리지 않도록 함
+        BoundingBoxes.Empty();
+    }
+    
     if (BoundingBoxes.Num() > allocatedBoundingBoxCapacity) {
         allocatedBoundingBoxCapacity = BoundingBoxes.Num();
 

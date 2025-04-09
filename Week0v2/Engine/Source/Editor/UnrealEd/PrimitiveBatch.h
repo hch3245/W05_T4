@@ -1,6 +1,9 @@
 #pragma once
 #include "Define.h"
 #include <d3d11.h>
+
+class FEditorViewportClient;
+
 class UPrimitiveBatch
 {
 public:
@@ -16,9 +19,9 @@ public:
     void ClearGrid() {};
     float GetSpacing() { return GridParam.gridSpacing; }
     void GenerateGrid(float spacing, int gridCount);
-    void RenderBatch(ID3D11Buffer* ConstantBuffer, const FMatrix& View, const FMatrix& Projection);
+    void RenderBatch(ID3D11Buffer* ConstantBuffer, const FMatrix& View, const FMatrix& Projection, std::shared_ptr<FEditorViewportClient> ActiveViewport);
     void InitializeVertexBuffer();
-    void UpdateBoundingBoxResources();
+    void UpdateBoundingBoxResources(std::shared_ptr<FEditorViewportClient> ActiveViewport);
     void ReleaseBoundingBoxResources();
     void UpdateConeResources();
     void ReleaseConeResources();
