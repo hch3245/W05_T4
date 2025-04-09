@@ -776,6 +776,7 @@ void FRenderer::RenderFogVisualization()
             fog->curFogConstant->FarClip = GEngine->GetLevelEditor()->GetActiveViewportClient()->GetFarClip();
             fog->curFogConstant->InvProjection = FMatrix::Inverse(
                 GEngine->GetLevelEditor()->GetActiveViewportClient()->GetProjectionMatrix());
+            fog->curFogConstant->FogBaseHeight = fog->GetLocalLocation().z;
             ConstantBufferUpdater.UpdateFogConstant(FogConstantBuffer,fog->curFogConstant);
         }
    }

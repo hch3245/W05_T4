@@ -6,12 +6,12 @@ cbuffer FogConstants : register(b0)
     float FogCutoffDistance;                    // 안개가 최대치에 도달하는 거리
     float FogMaxOpacity;
     float FarClip;
-    float2 Pad1;
+    float FogBaseHeight;
+    float Pad1;
     float4 FogInscatteringColor;
     float3 CameraWorldPos;
     float Pad2;
     float4x4 InvProjection;
-    
 }
 Texture2D SceneColor : register(t0);
 // ScenePosition : 화면상의 픽셀마다 월드좌표가 저장도니 텍스처
@@ -22,46 +22,44 @@ SamplerState LinearSampler : register(s0);
 
 float4 main(float4 pos : SV_POSITION, float2 uv : TEXCOORD) : SV_TARGET
 {
-    //float3 worldPos = ScenePosition.Sample(LinearSampler, uv).rgb;
+    // 픽셀의 월드 좌표와 카메라 간의 거리 계산
     float3 worldPos = ScenePosition.Sample(LinearSampler, uv).rgb;
-    float depth = Depth.Sample(LinearSampler, uv).r;
-    // 해당 픽셀이 카메라에서 얼마나 떨어졌는지
-    // length : 벡터의 유클리디안 거리
-    float distance = length(worldPos - CameraWorldPos);
+    float3 viewDir = worldPos - CameraWorldPos;
+    float distance = length(viewDir);
+
+    // -----------------------------------------------------
+    // 1. 거리 기반 안개 계산 (Exponential)
+    //    - StartDistance 이후부터 안개 적용 (StartDistance 이하이면 0)
+    //    - distanceTerm은 안개가 시작되는 지점 이후의 거리
+    float distanceTerm = max(0.0, distance - StartDistance);
+    //    - 지수 함수로 안개 누적: (값이 작을수록 안개가 덜 끼고, 멀어질수록 1에 가까워짐)
+    float distanceFogFactor = 1.0 - exp(-FogDensity * distanceTerm);
+    distanceFogFactor = saturate(distanceFogFactor); // [0,1]로 클램프
+
+    // -----------------------------------------------------
+    // 2. 높이 기반 안개 계산 (Exponential)
+    //    - 카메라보다 아래쪽에 위치한 경우에 더 많은 안개 (카메라 위쪽이면 0에 가깝게)
+    //float heightTerm = max(0.0, -worldPos.z);
+    float heightTerm = FogBaseHeight - worldPos.z;
+    heightTerm = max(0.0, heightTerm);
+    float heightFogFactor = 1.0 - exp(-FogHeightFalloff * heightTerm);
+    heightFogFactor = saturate(heightFogFactor);
+
+    // -----------------------------------------------------
+    // 3. 최종 안개 양 결정
+    //    - 거리와 높이의 효과를 곱해서 최종 안개 양 결정
+    float fogAmount = distanceFogFactor * heightFogFactor;
+    //    - FogMaxOpacity를 넘지 않도록 제한 (에셋이나 설정에 따라 조절)
+    fogAmount = min(fogAmount, FogMaxOpacity);
     
-    
-    // 지금 픽셀이 안개 구간에서 몇% 위치에 있는가를 정규화하는 단계
-    // fogDistanceFactor : 0 -> 안개 없음. / 1 -> 안개 최대치 도달.
-    // saturate : 결과를 0.0~1.0으로 clamp
-    //float fogDistanceFactor = saturate((distance - StartDistance) / (FogCutoffDistance - StartDistance));
-    //float fogDistanceFactor = 1.0 - exp(-distance * FogDensity);
-    
-    float rawFog = 1.0 - exp(-distance * FogDensity);
-    float fogDistanceFactor = saturate((rawFog - StartDistance) / (FogCutoffDistance - StartDistance));
-    
-    //if (depth >= 1.0f)
-    //{
-    //    float2 ndc = uv * 2.0 - 1.0;
-    //    ndc.y = -ndc.y;
-        
-    //    float4 clipPos = float4(ndc.x, ndc.y, 1.0f, 1.0f);
-    //    float4 viewPos = mul(clipPos, InvProjection);
-        
-    //    float3 viewDir = normalize(viewPos.xyz / viewPos.w);
-        
-    //    worldPos = CameraWorldPos + viewDir * FarClip;
-    //}
-    // 높이에 따른 감쇠 적용
-   //float fogHeightFactor = exp(-FogHeightFalloff * worldPos.y);
-    float fogHeightFactor = exp(-FogHeightFalloff * worldPos.z);
-    // 최종 안개량
-    //float fogAmount = saturate(fogHeightFactor * FogDensity * fogDistanceFactor);
-    float fogAmount = saturate(fogDistanceFactor * fogHeightFactor);
-    fogAmount = pow(fogAmount, 1.2);
+    // -----------------------------------------------------
+    // 4. 색상 보간 및 최종 색상 계산
+    //    - FogInscatteringColor는 감마 보정 후 선형 공간으로 변환
+    float3 fogColor = pow(FogInscatteringColor.rgb, 2.2);
     float3 sceneColor = SceneColor.Sample(LinearSampler, uv).rgb;
     
-    float3 fogColor = pow(FogInscatteringColor.rgb, 2.2); // 감마 -> 선형 변환
+    //    - 원래 장면 색과 안개 색을 fogAmount만큼 보간
+    float3 finalColor = lerp(sceneColor, fogColor, fogAmount);
     
-    float3 finalColor = lerp(sceneColor, fogColor, fogAmount);    
-    return float4(finalColor.rgb, 1.0f);
+    return float4(finalColor, 1.0);
 }

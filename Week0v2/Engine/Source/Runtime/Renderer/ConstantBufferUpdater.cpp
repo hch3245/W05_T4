@@ -139,6 +139,7 @@ void FConstantBufferUpdater::UpdateFogConstant(ID3D11Buffer* buffer, FFogConstan
         constants->FogMaxOpacity = fogConstant->FogMaxOpacity;
         constants->FogInScatteringColor = fogConstant->FogInScatteringColor;
         constants->CameraWorldPos = fogConstant->CameraWorldPos;
+        constants->FogBaseHeight = fogConstant->FogBaseHeight;
     }
     DeviceContext->Unmap(buffer, 0);
 

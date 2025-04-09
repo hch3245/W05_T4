@@ -332,7 +332,8 @@ struct alignas(16) FFogConstants {
     float FogCutOffDistance;            // 안개가 완전히 적용되는 최대 거리
     float FogMaxOpacity;    // 안개 최대 불투명도
     float FarClip;
-    float pad1[2];
+    float FogBaseHeight;
+    float padding1;
     FVector4 FogInScatteringColor;       // 빛의 산란 색상
     FVector CameraWorldPos;
     float padding2;

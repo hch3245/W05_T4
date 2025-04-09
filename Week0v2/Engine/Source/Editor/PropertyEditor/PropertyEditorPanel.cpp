@@ -324,6 +324,39 @@ void PropertyEditorPanel::Render()
         }
 
     }
+
+    if (PickedActor && PickedComponent && PickedComponent->IsA<UFogComponent>()) {
+        UFogComponent* fogComp = Cast<UFogComponent>(PickedComponent);
+        if (ImGui::TreeNodeEx("Fog Component", ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_DefaultOpen)){ // 트리 노드 생성
+            bool fogChanged = false;
+
+            fogChanged |= ImGui::SliderFloat("Fog Density", 
+                                            &fogComp->curFogConstant->FogDensity,
+                                            0.0f, 1.0f, "%.3f");
+            fogChanged |= ImGui::SliderFloat("Fog Height Falloff",
+                &fogComp->curFogConstant->FogHeightFalloff,
+                0.0f, 10.0f, "%.3f");
+            fogChanged |= ImGui::SliderFloat("Start Distance",
+                &fogComp->curFogConstant->StartDistance,
+                0.0f, 1000.0f, "%.3f");
+            // 안개가 최대치에 도달하는 거리
+    // StartDistance보다는 크도록 최소값 설정
+            fogChanged |= ImGui::SliderFloat("Fog CutOff Distance",
+                &fogComp->curFogConstant->FogCutOffDistance,
+                fogComp->curFogConstant->StartDistance, 5000.0f, "%.3f");
+
+            // 안개의 최대 불투명도 (0 ~ 1 범위)
+            fogChanged |= ImGui::SliderFloat("Max Opacity",
+                &fogComp->curFogConstant->FogMaxOpacity,
+                0.0f, 1.0f, "%.3f");
+
+            // 안개 인스캐터링 색상 (ColorEdit4를 사용하여 RGBA값 조절)
+            fogChanged |= ImGui::ColorEdit4("Fog Inscattering Color",
+                (float*)&fogComp->curFogConstant->FogInScatteringColor);
+
+            ImGui::TreePop();
+        }
+    }
     ImGui::End();
 
 
