@@ -14,13 +14,14 @@ UFogComponent::UFogComponent()
     //FIXME : 임시 초기화 값.
     curFogConstant = new FFogConstants();
 
-    curFogConstant->FogDensity = 0.05f;
-    curFogConstant->FogHeightFalloff = 0.05f;
+    curFogConstant->FogDensity = 0.02f;
+    curFogConstant->FogHeightFalloff = 0.03f;
     curFogConstant->StartDistance = 0.0f;
     curFogConstant->FogCutOffDistance = 50.0f;
     curFogConstant->FogMaxOpacity = 1.0f;
-    curFogConstant->FogInScatteringColor = FVector4(0.9f, 0.4f, 0.1f, 1.0f);
+    curFogConstant->FogInScatteringColor = FVector4(0.749f, 0.749f, 0.749f, 1.0f);
         //FVector4(0.7f, 0.8f, 1.0f, 1.0f);
+    SetLocation(FVector(0.0f, 0.0f, 30.0f));
 }
 
 UFogComponent::~UFogComponent()
