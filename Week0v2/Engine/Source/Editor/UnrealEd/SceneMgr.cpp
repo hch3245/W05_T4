@@ -18,6 +18,9 @@
 #include "Engine/FLoaderOBJ.h"
 #include "LevelEditor/SLevelEditor.h"
 
+#include <Windows.h>
+#include <string>
+
 using json = nlohmann::json;
 
 void FSceneMgr::ParseSceneData(const FString& jsonStr)
@@ -148,25 +151,86 @@ std::string FSceneMgr::SerializeSceneData(const SceneData& sceneData)
     j["Version"] = sceneData.Version;
     j["NextUUID"] = sceneData.NextUUID;
 
-    // Primitives 처리 (C++17 스타일)
-    for (const auto& [Id, Obj] : sceneData.Primitives)
-    {
-        USceneComponent* primitive = static_cast<USceneComponent*>(Obj);
-        std::vector<float> Location = { primitive->GetWorldLocation().x,primitive->GetWorldLocation().y,primitive->GetWorldLocation().z };
-        std::vector<float> Rotation = { primitive->GetWorldRotation().x,primitive->GetWorldRotation().y,primitive->GetWorldRotation().z };
-        std::vector<float> Scale = { primitive->GetWorldScale().x,primitive->GetWorldScale().y,primitive->GetWorldScale().z };
 
-        std::string primitiveName = *primitive->GetName();
-        size_t pos = primitiveName.rfind('_');
-        if (pos != INDEX_NONE) {
-            primitiveName = primitiveName.substr(0, pos);
-        }
-        j["Primitives"][std::to_string(Id)] = {
-            {"Location", Location},
-            {"Rotation", Rotation},
-            {"Scale", Scale},
-            {"Type",primitiveName}
-        };
+    // 일단 활성화된 viewport 하나만 Camera 정보 넣기
+    // TODO: 다중 Viewport에 대한 처리
+    std::shared_ptr<FEditorViewportClient> activeViewportClient = GEngine->GetLevelEditor()->GetActiveViewportClient();
+
+    // activeViewportClient의 현재 상태를 추출합니다.
+    FVector loc = activeViewportClient->ViewTransformPerspective.GetLocation();
+    FVector rot = activeViewportClient->ViewTransformPerspective.GetRotation();
+    float fov = activeViewportClient->GetViewFOV();
+    float nearClip = activeViewportClient->GetNearClip();
+    float farClip = activeViewportClient->GetFarClip();
+
+    // PerspectiveCamera에 해당하는 JSON 객체 생성 (각 속성은 배열 형태로 구성)
+    json perspectiveCameraJson;
+    perspectiveCameraJson["Location"] = { loc.x, loc.y, loc.z };
+    perspectiveCameraJson["Rotation"] = { rot.x, rot.y, rot.z };
+    perspectiveCameraJson["FOV"] = { fov };
+    perspectiveCameraJson["NearClip"] = { nearClip };
+    perspectiveCameraJson["FarClip"] = { farClip };
+
+    // 최종 JSON 객체에 PerspectiveCamera 추가
+    j["PerspectiveCamera"] = perspectiveCameraJson;
+
+    // Primitives 처리 (C++17 스타일)
+    for (const auto& [Id, Obj] : sceneData.PrimitiveActors)
+    {
+		AActor* Actor = Cast<AActor>(Obj);
+		if (Actor != nullptr) { // Actor가 맞는 경우, Actor만 들어온다고 가정
+			
+			// RootComponent 값을 기반으로 Primitive 값들 지정
+			USceneComponent* rootComp = Actor->GetRootComponent();
+			std::vector<float> Location = { rootComp->GetWorldLocation().x, rootComp->GetWorldLocation().y, rootComp->GetWorldLocation().z };
+			std::vector<float> Rotation = { rootComp->GetWorldRotation().x, rootComp->GetWorldRotation().y, rootComp->GetWorldRotation().z };
+			std::vector<float> Scale = { rootComp->GetWorldScale().x, rootComp->GetWorldScale().y, rootComp->GetWorldScale().z };
+
+			std::string primitiveName = *rootComp->GetName();
+			size_t pos = primitiveName.rfind('_');
+			if (pos != INDEX_NONE) {
+				primitiveName = primitiveName.substr(0, pos);
+			}
+			j["Primitives"][std::to_string(Id)] = {
+				{"Location", Location},
+				{"Rotation", Rotation},
+				{"Scale", Scale},
+				{"Type",primitiveName}
+			};
+			
+			std::string actorName = *Actor->GetName();
+			pos = actorName.rfind('_');
+			if (pos != INDEX_NONE) {
+				actorName = actorName.substr(0, pos);
+			}
+
+			if (actorName == AStaticMeshActor::StaticClass()->GetName())
+			{
+				// StaticMeshActor인 경우
+				AStaticMeshActor* StaticMeshActor = Cast<AStaticMeshActor>(Actor);
+				UStaticMeshComponent* MeshComp = StaticMeshActor->GetStaticMeshComponent();
+				FWString ObjPathName = MeshComp->GetStaticMesh()->GetRenderData()->PathName + MeshComp->GetStaticMesh()->GetRenderData()->ObjectName;
+				
+				if (ObjPathName != L"") {
+					// "ObjStaticMeshAsset" 가 있는 경우
+
+					std::string sPathName = ConvertFWStringToString(ObjPathName);
+
+					j["Primitives"][std::to_string(Id)] = {
+                        {"Location", Location},
+                        {"Rotation", Rotation},
+                        {"Scale", Scale},
+                        {"ObjStaticMeshAsset", sPathName},
+						{"Type", "StaticMeshComp"}
+					};
+				}
+
+			}
+
+
+		}
+
+        
     }
 
     for (const auto& [id, camera] : sceneData.Cameras)
@@ -206,5 +270,27 @@ bool FSceneMgr::SaveSceneToFile(const FString& filename, const SceneData& sceneD
     outFile.close();
 
     return true;
+}
+
+std::string FSceneMgr::ConvertFWStringToString(const FWString& InFWString)
+{
+	if (InFWString.empty())
+		return std::string();
+
+	// WideCharToMultiByte를 사용하여 UTF-8 인코딩에 필요한 버퍼 크기를 구합니다.
+	int bufferSize = WideCharToMultiByte(CP_UTF8, 0, InFWString.c_str(), -1, nullptr, 0, nullptr, nullptr);
+	if (bufferSize == 0)
+		return std::string();
+
+	// 변환 결과를 저장할 std::string 객체를 생성 (널 종료 문자 포함)
+	std::string result(bufferSize, 0);
+	int convertedChars = WideCharToMultiByte(CP_UTF8, 0, InFWString.c_str(), -1, &result[0], bufferSize, nullptr, nullptr);
+
+	// WideCharToMultiByte는 널 종료 문자를 포함하여 버퍼에 쓴다.
+	// std::string에서는 끝의 널 문자 제거가 더 깔끔하게 사용할 수 있으므로 제거합니다.
+	if (!result.empty() && result.back() == '\0')
+		result.pop_back();
+
+	return result;
 }
 
