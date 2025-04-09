@@ -39,12 +39,6 @@ void UWorld::CreateBaseObject()
     {
         LocalGizmo = FObjectFactory::ConstructObject<UTransformGizmo>();
     }
-
-    if (FogComponent == nullptr) 
-    {
-        FogComponent = FObjectFactory::ConstructObject<UFogComponent>();
-        FogComponent->CreateScreenQuadVertexBuffer();
-    }
 }
 
 void UWorld::ReleaseBaseObject()
@@ -59,11 +53,6 @@ void UWorld::ReleaseBaseObject()
     {
         delete EditorPlayer;
         EditorPlayer = nullptr;
-    }
-    if (FogComponent)
-    {
-        delete FogComponent;
-        FogComponent = nullptr;
     }
 
 }

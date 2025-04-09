@@ -7,6 +7,7 @@
 #include "Components/SphereComp.h"
 #include "Components/UParticleSubUVComp.h"
 #include "Components/UText.h"
+#include "Components/SkySphereComponent.h"
 #include "Engine/FLoaderOBJ.h"
 #include "Engine/StaticMeshActor.h"
 #include "ImGUI/imgui_internal.h"
@@ -264,6 +265,8 @@ void ControlEditorPanel::CreateModifyButton(ImVec2 ButtonSize, ImFont* IconFont)
             { .label= "Particle",  .obj= OBJ_PARTICLE },
             { .label= "Text",      .obj= OBJ_Text },
             { .label= "FireBall",  .obj= OBJ_FireBall }
+            { .label= "SkySphere", .obj= OBJ_SKYSPHERE },
+            {.label = "HeightFog", .obj = OBJ_HEIGHTFOG}
         };
         
         for (const auto& primitive : primitives)
@@ -337,15 +340,36 @@ void ControlEditorPanel::CreateModifyButton(ImVec2 ButtonSize, ImFont* IconFont)
                 case OBJ_TRIANGLE:
                 case OBJ_CAMERA:
                 case OBJ_PLAYER:
+                case OBJ_SKYSPHERE:
+                {
+                    SpawnedActor = World->SpawnActor<AActor>();
+                    SpawnedActor->SetActorLabel(TEXT("OBJ_SKYSPHERE"));
+                    if (SpawnedActor)
+                    {
+                        World->SetPickedActor(SpawnedActor);
+                        World->SetPickedComponent(SpawnedActor->GetRootComponent());
+                        USkySphereComponent* SkySphereComponent = SpawnedActor->AddComponent<USkySphereComponent>();
+                        FManagerOBJ::CreateStaticMesh("Assets/SkySphere.obj");
+                        SkySphereComponent->SetStaticMesh(FManagerOBJ::GetStaticMesh(L"SkySphere.obj"));
+                    }
+
+                    break;
+                }
+                case OBJ_HEIGHTFOG:
+                {
+                    SpawnedActor = World->SpawnActor<AActor>();
+                    SpawnedActor->SetActorLabel(TEXT("OBJ_FOG"));
+                    if (SpawnedActor)
+                    {
+                        UFogComponent* FogComponent = SpawnedActor->AddComponent<UFogComponent>();
+                        FogComponent->CreateScreenQuadVertexBuffer();
+                    }
+                }
                 case OBJ_END:
                     break;
                 }
         
-                if (SpawnedActor)
-                {
-                    World->SetPickedActor(SpawnedActor);
-                    World->SetPickedComponent(SpawnedActor->GetRootComponent());
-                }
+                
             }
         }
         ImGui::EndPopup();

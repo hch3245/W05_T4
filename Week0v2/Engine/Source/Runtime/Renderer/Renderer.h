@@ -22,6 +22,7 @@ class FEditorViewportClient;
 class UBillboardComponent;
 class UStaticMeshComponent;
 class UGizmoBaseComponent;
+class UFogComponent;
 class FRenderResourceManager;
 class FRenderer 
 {
@@ -129,6 +130,7 @@ private:
     TArray<UGizmoBaseComponent*> GizmoObjs;
     TArray<UBillboardComponent*> BillboardObjs;
     TArray<ULightComponentBase*> LightObjs;
+    TArray<UFogComponent*> FogObjs;
 
 public:
     ID3D11VertexShader* VertexLineShader = nullptr;
