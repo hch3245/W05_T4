@@ -198,7 +198,7 @@ PS_OUTPUT mainPS(PS_INPUT input)
 
             // 스페큘러 조명 (Blinn-Phong)
                 float3 H = normalize(L + V);
-                float spec = pow(saturate(dot(N, H)), Material.SpecularScalar * 32);
+                float spec = pow(saturate(dot(N, H)), Material.SpecularScalar);
                 float3 specular = spec * Material.SpecularColor * light.Color.rgb * light.Intensity;
 
             // 감쇠 적용
