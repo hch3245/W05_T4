@@ -48,7 +48,7 @@ float4 main(float4 pos : SV_POSITION, float2 uv : TEXCOORD) : SV_TARGET
 
     // -----------------------------------------------------
     // 2. 높이 기반 안개 계산 (Exponential)
-    //    - 카메라보다 아래쪽에 위치한 경우에 더 많은 안개 (카메라 위쪽이면 0에 가깝게)
+    //   FogBaseHeight 기준으로 아래로 갈수록 안개가 진해짐. 
     //float heightTerm = max(0.0, -worldPos.z);
     float heightTerm = FogBaseHeight - worldPos.z;
     heightTerm = max(0.0, heightTerm);
