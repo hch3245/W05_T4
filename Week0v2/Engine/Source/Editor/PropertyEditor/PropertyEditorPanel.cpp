@@ -18,7 +18,6 @@
 #include "Components/FireBallComponent.h"
 #include "Components/RotationMovementComponent.h"
 #include "Components/ProjectileMovementComponent.h"
-
 void PropertyEditorPanel::Render()
 {
     /* Pre Setup */
@@ -49,7 +48,9 @@ void PropertyEditorPanel::Render()
     AEditorPlayer* player = GEngine->GetWorld()->GetEditorPlayer();
     AActor* PickedActor = GEngine->GetWorld()->GetSelectedActor();
     USceneComponent* PickedSceneComponent = GEngine->GetWorld()->GetSelectedComponent();
-    PickedComponent = PickedSceneComponent; // 프로퍼티 외에서 피킹을 한 경우 프로퍼티도 적용 되도록
+    //PickedComponent = PickedSceneComponent; // 프로퍼티 외에서 피킹을 한 경우 프로퍼티도 적용 되도록
+    if (PickedComponent == nullptr && PickedSceneComponent != nullptr)
+        PickedComponent = PickedSceneComponent;
 
     // TODO: 추후에 RTTI를 이용해서 프로퍼티 출력하기
     if (PickedActor)
@@ -64,6 +65,27 @@ void PropertyEditorPanel::Render()
                     if (SceneComp->GetAttachParent() == nullptr)
                     {
                         DrawSceneComponentTree(SceneComp, PickedComponent);
+                    }
+                }
+            }
+            for (UActorComponent* Component : AllComponents)
+            {
+                if (UProjectileMovementComponent* PJMVComp = Cast<UProjectileMovementComponent>(Component))
+                {
+                    FString Label = *Component->GetName();
+                    bool bSelected = (PickedComponent == Component);
+
+                    if (ImGui::Selectable(*Label, bSelected)) {
+                        PickedComponent = Component;
+                    }
+                }
+                if (URotationMovementComponent* PJMVComp = Cast<URotationMovementComponent>(Component))
+                {
+                    FString Label = *Component->GetName();
+                    bool bSelected = (PickedComponent == Component);
+
+                    if (ImGui::Selectable(*Label, bSelected)) {
+                        PickedComponent = Component;
                     }
                 }
             }
@@ -323,9 +345,9 @@ void PropertyEditorPanel::Render()
     }
 
     // TODO: 추후에 RTTI를 이용해서 프로퍼티 출력하기
-    if (PickedActor)
-    if (UStaticMeshComponent* StaticMeshComponent = PickedActor->GetComponentByClass<UStaticMeshComponent>())
+    if (PickedComponent && PickedComponent->IsA<UStaticMeshComponent>())
     {
+        UStaticMeshComponent* StaticMeshComponent = Cast<UStaticMeshComponent>(PickedComponent);
         RenderForStaticMesh(StaticMeshComponent);
         RenderForMaterial(StaticMeshComponent);
     }
@@ -360,7 +382,8 @@ void PropertyEditorPanel::Render()
 
     }
 
-    if (PickedActor && PickedComponent && PickedComponent->IsA<UFogComponent>()) {
+    if (PickedActor && PickedComponent && PickedComponent->IsA<UFogComponent>()) 
+    {
         UFogComponent* fogComp = Cast<UFogComponent>(PickedComponent);
         if (ImGui::TreeNodeEx("Fog Component", ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_DefaultOpen)){ // 트리 노드 생성
             bool fogChanged = false;
@@ -388,6 +411,50 @@ void PropertyEditorPanel::Render()
             // 안개 인스캐터링 색상 (ColorEdit4를 사용하여 RGBA값 조절)
             fogChanged |= ImGui::ColorEdit4("Fog Inscattering Color",
                 (float*)&fogComp->curFogConstant->FogInScatteringColor);
+
+            ImGui::TreePop();
+        }
+    }
+    if (PickedActor && PickedComponent && PickedComponent->IsA<UProjectileMovementComponent>()) {
+        UProjectileMovementComponent* PJMVComp = Cast<UProjectileMovementComponent>(PickedComponent);
+        if (ImGui::TreeNodeEx("ProjectileMovement Component", ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_DefaultOpen)){ // 트리 노드 생성
+            FVector Direction = PJMVComp->GetDirection();
+            float InitialSpeed = PJMVComp->GetInitialSpeed();
+            float MaxLifeTime = PJMVComp->GetMaxLifeTime();
+            if (FImGuiWidget::DrawVec3Control("Direction", Direction))
+            {
+                PJMVComp->SetDirection(Direction);
+            }
+            if (ImGui::DragFloat("Initial Speed", &InitialSpeed, 0.01f, 0.0f, 1000.0f, "%.3f"))
+            {
+                PJMVComp->SetInitialSpeed(InitialSpeed);
+            }
+            if (ImGui::SliderFloat("Max Life Time", &MaxLifeTime, 0.0f, 300.0f, "%.1f"))
+            {
+                PJMVComp->SetMaxLifeTime(MaxLifeTime);
+            }
+
+            ImGui::TreePop();
+        }
+    }
+    if (PickedActor && PickedComponent && PickedComponent->IsA<URotationMovementComponent>()) {
+        URotationMovementComponent* RTMVComp = Cast<URotationMovementComponent>(PickedComponent);
+        if (ImGui::TreeNodeEx("URotationMovement Component", ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_DefaultOpen)) { // 트리 노드 생성
+            float PitchSpeed = RTMVComp->GetPitchSpeed();
+            float YawSpeed = RTMVComp->GetYawSpeed();
+            float RollSpeed = RTMVComp->GetRollSpeed();
+            if (ImGui::DragFloat("Pitch Speed", &PitchSpeed, 0.01f, 0.0f, 1000.0f, "%.3f"))
+            {
+                RTMVComp->SetPitchSpeed(PitchSpeed);
+            }
+            if (ImGui::DragFloat("Yaw Speed", &YawSpeed, 0.01f, 0.0f, 1000.0f, "%.3f"))
+            {
+                RTMVComp->SetYawSpeed(YawSpeed);
+            }
+            if (ImGui::DragFloat("Roll Speed", &RollSpeed, 0.01f, 0.0f, 1000.0f, "%.3f"))
+            {
+                RTMVComp->SetPitchSpeed(RollSpeed);
+            }
 
             ImGui::TreePop();
         }

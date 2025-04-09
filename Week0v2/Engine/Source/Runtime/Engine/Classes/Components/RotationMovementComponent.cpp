@@ -31,6 +31,36 @@ void URotationMovementComponent::TickComponent(float DeltaTime)
     Super::TickComponent(DeltaTime);
 }
 
+float URotationMovementComponent::GetPitchSpeed()
+{
+    return PitchSpeed;
+}
+
+float URotationMovementComponent::GetYawSpeed()
+{
+    return YawSpeed;
+}
+
+float URotationMovementComponent::GetRollSpeed()
+{
+    return RollSpeed;
+}
+
+void URotationMovementComponent::SetPitchSpeed(float newSpeed)
+{
+    PitchSpeed = newSpeed;
+}
+
+void URotationMovementComponent::SetYawSpeed(float newSpeed)
+{
+    YawSpeed = newSpeed;
+}
+
+void URotationMovementComponent::SetRollSpeed(float newSpeed)
+{
+    RollSpeed = newSpeed;
+}
+
 UObject* URotationMovementComponent::Duplicate() const
 {
     URotationMovementComponent* CloneRTMove =

@@ -9,6 +9,13 @@ public:
     URotationMovementComponent(const URotationMovementComponent& other);
     virtual ~URotationMovementComponent();
     virtual void TickComponent(float DeltaTime) override;
+public:
+    float GetPitchSpeed();
+    float GetYawSpeed();
+    float GetRollSpeed();
+    void SetPitchSpeed(float newSpeed);
+    void SetYawSpeed(float newSpeed);
+    void SetRollSpeed(float newSpeed);
 private:
     float PitchSpeed = 0.450f * (3.1415926f / 180.0f); // X축
     float YawSpeed = 0.300f * (3.1415926f / 180.0f); // Z축

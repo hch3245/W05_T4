@@ -44,6 +44,46 @@ void UProjectileMovementComponent::TickComponent(float DeltaTime)
     Super::TickComponent(DeltaTime);
 }
 
+void UProjectileMovementComponent::SetDirection(const FVector& Direction)
+{
+    this->Direction = Direction;
+}
+
+void UProjectileMovementComponent::SetInitialSpeed(float InitialSpeed)
+{
+    this->InitialSpeed = InitialSpeed;
+}
+
+void UProjectileMovementComponent::SetMaxLifeTime(float MaxLifeTime)
+{
+    this->MaxLifeTime = MaxLifeTime;
+}
+
+void UProjectileMovementComponent::SetLifeTime(float LifeTime)
+{
+    this->LifeTime = LifeTime;
+}
+
+const FVector& UProjectileMovementComponent::GetDirection() const
+{
+    return Direction;
+}
+
+float UProjectileMovementComponent::GetInitialSpeed() const
+{
+    return InitialSpeed;
+}
+
+float UProjectileMovementComponent::GetMaxLifeTime() const
+{
+    return MaxLifeTime;
+}
+
+float UProjectileMovementComponent::GetLifeTime() const
+{
+    return LifeTime;
+}
+
 UObject* UProjectileMovementComponent::Duplicate() const
 {
     UProjectileMovementComponent* ClonePJMove =

@@ -135,6 +135,7 @@ void UStaticMeshComponent::PostDuplicate() {}
 
 void UStaticMeshComponent::TickComponent(float DeltaTime)
 {
+    /*
     Timer += DeltaTime * 0.005f;
     if (AttachParent) 
     {
@@ -145,5 +146,6 @@ void UStaticMeshComponent::TickComponent(float DeltaTime)
     {
         SetLocation(GetWorldLocation() + (FVector(1.0f, 1.0f, 1.0f) * sin(Timer)));
     }
+    */
     
 }

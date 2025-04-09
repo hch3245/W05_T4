@@ -10,6 +10,16 @@ public:
     virtual ~UProjectileMovementComponent();
     virtual void InitializeComponent() override;
     virtual void TickComponent(float DeltaTime) override;
+
+    void SetDirection(const FVector& Direction);
+    void SetInitialSpeed(float InitialSpeed);
+    void SetMaxLifeTime(float MaxLifeTime);
+    void SetLifeTime(float LifeTime);
+
+    const FVector& GetDirection() const;
+    float GetInitialSpeed() const;
+    float GetMaxLifeTime() const;
+    float GetLifeTime() const;
 private:
     FVector Direction;
     float InitialSpeed = 0.001f;   // 유닛당 초당 거리
