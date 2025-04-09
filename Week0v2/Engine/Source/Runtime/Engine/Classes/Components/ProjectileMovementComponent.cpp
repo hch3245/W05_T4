@@ -5,6 +5,12 @@ UProjectileMovementComponent::UProjectileMovementComponent()
 {
 }
 
+UProjectileMovementComponent::UProjectileMovementComponent(const UProjectileMovementComponent& other):
+    UMovementComponent(other),Direction(other.Direction),InitialSpeed(other.InitialSpeed),
+    MaxLifeTime(other.MaxLifeTime),LifeTime(0)
+{
+}
+
 UProjectileMovementComponent::~UProjectileMovementComponent()
 {
 }
@@ -36,4 +42,23 @@ void UProjectileMovementComponent::TickComponent(float DeltaTime)
     }
 
     Super::TickComponent(DeltaTime);
+}
+
+UObject* UProjectileMovementComponent::Duplicate() const
+{
+    UProjectileMovementComponent* ClonePJMove =
+        FObjectFactory::ConstructObjectFrom<UProjectileMovementComponent>(this);
+    ClonePJMove->DuplicateSubObjects(this);
+    ClonePJMove->PostDuplicate();
+    return ClonePJMove;
+}
+
+void UProjectileMovementComponent::DuplicateSubObjects(const UObject* Source)
+{
+    UMovementComponent::DuplicateSubObjects(Source);
+}
+
+void UProjectileMovementComponent::PostDuplicate()
+{
+    UMovementComponent::PostDuplicate();
 }

@@ -9,6 +9,7 @@ class ULightComponentBase : public USceneComponent
 
 public:
     ULightComponentBase();
+    ULightComponentBase(const ULightComponentBase& Other);
     virtual ~ULightComponentBase() override;
 
     virtual void InitializeComponent() override;
@@ -22,6 +23,10 @@ public:
     void SetRadius(float r);
     void SetIntensity(float intensity);
     float GetIntensity() const;
+public:
+    virtual UObject* Duplicate() const override;
+    virtual void DuplicateSubObjects(const UObject* Source) override;
+    virtual void PostDuplicate();
 private:
     FVector4 color;
     float Intensity=1.0f;
