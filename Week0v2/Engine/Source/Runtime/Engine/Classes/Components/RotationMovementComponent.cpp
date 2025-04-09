@@ -26,7 +26,7 @@ void URotationMovementComponent::TickComponent(float DeltaTime)
     FVector vecRot = owner->GetActorRotation();
     FQuat CurrentRotation = FQuat::CreateRotation(vecRot.x, vecRot.y, vecRot.z);
 
-    FQuat WorldRotation = DeltaRotation * CurrentRotation;
+    FQuat WorldRotation = CurrentRotation * DeltaRotation;
     owner->SetActorRotation(WorldRotation.ToEulerDegrees());
     Super::TickComponent(DeltaTime);
 }

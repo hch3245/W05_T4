@@ -48,9 +48,9 @@ void PropertyEditorPanel::Render()
     AEditorPlayer* player = GEngine->GetWorld()->GetEditorPlayer();
     AActor* PickedActor = GEngine->GetWorld()->GetSelectedActor();
     USceneComponent* PickedSceneComponent = GEngine->GetWorld()->GetSelectedComponent();
-    //PickedComponent = PickedSceneComponent; // 프로퍼티 외에서 피킹을 한 경우 프로퍼티도 적용 되도록
-    if (PickedComponent == nullptr && PickedSceneComponent != nullptr)
-        PickedComponent = PickedSceneComponent;
+    PickedComponent = PickedSceneComponent; // 프로퍼티 외에서 피킹을 한 경우 프로퍼티도 적용 되도록
+    //if (PickedComponent == nullptr && PickedSceneComponent != nullptr)
+    //    PickedComponent = PickedSceneComponent;
 
     // TODO: 추후에 RTTI를 이용해서 프로퍼티 출력하기
     if (PickedActor)
@@ -76,7 +76,7 @@ void PropertyEditorPanel::Render()
                     bool bSelected = (PickedComponent == Component);
 
                     if (ImGui::Selectable(*Label, bSelected)) {
-                        PickedComponent = Component;
+                        PickedNonSceneComponent = Component;
                     }
                 }
                 if (URotationMovementComponent* PJMVComp = Cast<URotationMovementComponent>(Component))
@@ -85,7 +85,7 @@ void PropertyEditorPanel::Render()
                     bool bSelected = (PickedComponent == Component);
 
                     if (ImGui::Selectable(*Label, bSelected)) {
-                        PickedComponent = Component;
+                        PickedNonSceneComponent = Component;
                     }
                 }
             }
@@ -415,8 +415,8 @@ void PropertyEditorPanel::Render()
             ImGui::TreePop();
         }
     }
-    if (PickedActor && PickedComponent && PickedComponent->IsA<UProjectileMovementComponent>()) {
-        UProjectileMovementComponent* PJMVComp = Cast<UProjectileMovementComponent>(PickedComponent);
+    if (PickedActor && PickedNonSceneComponent && PickedNonSceneComponent->IsA<UProjectileMovementComponent>()) {
+        UProjectileMovementComponent* PJMVComp = Cast<UProjectileMovementComponent>(PickedNonSceneComponent);
         if (ImGui::TreeNodeEx("ProjectileMovement Component", ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_DefaultOpen)){ // 트리 노드 생성
             FVector Direction = PJMVComp->GetDirection();
             float InitialSpeed = PJMVComp->GetInitialSpeed();
@@ -437,8 +437,8 @@ void PropertyEditorPanel::Render()
             ImGui::TreePop();
         }
     }
-    if (PickedActor && PickedComponent && PickedComponent->IsA<URotationMovementComponent>()) {
-        URotationMovementComponent* RTMVComp = Cast<URotationMovementComponent>(PickedComponent);
+    if (PickedActor && PickedNonSceneComponent && PickedNonSceneComponent->IsA<URotationMovementComponent>()) {
+        URotationMovementComponent* RTMVComp = Cast<URotationMovementComponent>(PickedNonSceneComponent);
         if (ImGui::TreeNodeEx("URotationMovement Component", ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_DefaultOpen)) { // 트리 노드 생성
             float PitchSpeed = RTMVComp->GetPitchSpeed() * (180.0f / 3.1415926f);
             float YawSpeed = RTMVComp->GetYawSpeed() * (180.0f / 3.1415926f);

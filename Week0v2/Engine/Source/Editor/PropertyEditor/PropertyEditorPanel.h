@@ -38,6 +38,7 @@ private:
     bool IsCreateMaterial;
     UActorComponent* PickedComponent = nullptr;
     UActorComponent* LastComponent = nullptr;
+    UActorComponent* PickedNonSceneComponent = nullptr;
     bool bFirstFrame = true;
 
 };
