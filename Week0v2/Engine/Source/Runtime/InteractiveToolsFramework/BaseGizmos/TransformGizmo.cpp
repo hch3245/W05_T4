@@ -82,13 +82,20 @@ void UTransformGizmo::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-    if (USceneComponent* PickedComponent = GetWorld()->GetSelectedComponent())
+    if (UActorComponent* PickedComponent = GetWorld()->GetSelectedComponent())
     {
-        SetActorLocation(PickedComponent->GetWorldLocation());
+        USceneComponent* PickedSceneComponent = Cast<USceneComponent>(PickedComponent);
+        if (PickedSceneComponent == nullptr) 
+        {
+            PickedSceneComponent = PickedComponent->GetOwner()->GetRootComponent();
+        }
+
+
+        SetActorLocation(PickedSceneComponent->GetWorldLocation());
         if (GetWorld()->GetEditorPlayer()->GetCoordiMode() == CoordiMode::CDM_LOCAL)
         {
             // TODO: 임시로 RootComponent의 정보로 사용
-            SetActorRotation(PickedComponent->GetWorldRotation());
+            SetActorRotation(PickedSceneComponent->GetWorldRotation());
         }
         else if (GetWorld()->GetEditorPlayer()->GetCoordiMode() == CoordiMode::CDM_WORLD)
             SetActorRotation(FVector(0.0f, 0.0f, 0.0f));
