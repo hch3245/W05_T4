@@ -147,14 +147,14 @@ void UPrimitiveBatch::RenderAABB(const FBoundingBox& localAABB, const FVector& c
     };
 
     FVector worldVertices[8];
-    worldVertices[0] = center + FMatrix::TransformVector(localVertices[0], modelMatrix);
+    worldVertices[0] = FMatrix::TransformVector(localVertices[0], modelMatrix);
 
     FVector min = worldVertices[0], max = worldVertices[0];
 
     // 첫 번째 값을 제외한 나머지 버텍스를 변환하고 min/max 계산
     for (int i = 1; i < 8; ++i)
     {
-        worldVertices[i] = center + FMatrix::TransformVector(localVertices[i], modelMatrix);
+        worldVertices[i] = FMatrix::TransformVector(localVertices[i], modelMatrix);
 
         min.x = (worldVertices[i].x < min.x) ? worldVertices[i].x : min.x;
         min.y = (worldVertices[i].y < min.y) ? worldVertices[i].y : min.y;
