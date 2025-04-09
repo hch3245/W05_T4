@@ -58,6 +58,5 @@ PS_INPUT mainVS(VS_INPUT input)
         output.normalFlag = 1.0;
     }
     output.texcoord = input.texcoord;
-    
     return output;
 }

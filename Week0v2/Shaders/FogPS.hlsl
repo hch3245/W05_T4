@@ -13,6 +13,14 @@ cbuffer FogConstants : register(b0)
     float Pad2;
     float4x4 InvProjection;
 }
+
+// 다중 Viewport 대응
+cbuffer CBViewportParams : register(b1)
+{
+    float2 ViewportScale;
+    float2 ViewportOffset;
+}
+
 Texture2D SceneColor : register(t0);
 // ScenePosition : 화면상의 픽셀마다 월드좌표가 저장도니 텍스처
 Texture2D ScenePosition : register(t1);

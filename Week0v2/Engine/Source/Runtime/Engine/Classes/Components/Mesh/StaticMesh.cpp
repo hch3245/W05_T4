@@ -20,6 +20,8 @@ UStaticMesh::~UStaticMesh()
         staticMeshRenderData->IndexBuffer->Release();
         staticMeshRenderData->IndexBuffer = nullptr;
     }
+
+    materials.Empty();
 }
 
 uint32 UStaticMesh::GetMaterialIndex(FName MaterialSlotName) const

@@ -56,6 +56,28 @@ cbuffer TextureConstants : register(b5)
     float2 TexturePad0;
 }
 
+struct FLightConstants
+{
+    float4 Color;
+    
+    float3 Position;
+    float Radius;
+
+    float3 Direction;
+    float SpotAngle;
+
+    float Intensity;
+    int Type;
+    float pad0;
+    float pad1;
+};
+
+StructuredBuffer<FLightConstants> g_Lights : register(t5);
+cbuffer FrameConstants : register(b6)
+{
+    int LightCount;
+}
+
 struct PS_INPUT
 {
     float4 position : SV_POSITION; // 변환된 화면 좌표
@@ -130,30 +152,68 @@ PS_OUTPUT mainPS(PS_INPUT input)
     
     // 발광 색상 추가
 
-    if (IsLit == 1) // 조명이 적용되는 경우
+    if (IsLit == 1)
     {
         if (input.normalFlag > 0.5)
         {
             float3 N = normalize(input.normal);
-            float3 L = normalize(LightDirection);
-            
-            // 기본 디퓨즈 계산
-            float diffuse = saturate(dot(N, L));
-            
-            // 스페큘러 계산 (간단한 Blinn-Phong)
-            float3 V = float3(0, 0, 1); // 카메라가 Z 방향을 향한다고 가정
-            float3 H = normalize(L + V);
-            float specular = pow(saturate(dot(N, H)), Material.SpecularScalar * 32) * Material.SpecularScalar;
-            
-            // 최종 라이팅 계산
+            float3 V = float3(0, 0, 1); // 카메라는 +Z를 바라본다고 가정
+            float3 litDiffuse = float3(0, 0, 0);
+            float3 litSpecular = float3(0, 0, 0);
+
+            for (int i = 0; i < LightCount; ++i)
+            {
+                FLightConstants light = g_Lights[i];
+
+                float3 L = float3(0, 0, 0);
+                float attenuation = 1.0f;
+
+                if (light.Type == 0) // Point Light
+                {
+                    float3 toLight = light.Position - input.worldPosition.xyz;
+                    float dist = length(toLight);
+                    L = normalize(toLight);
+                    attenuation = saturate(1.0 - dist / light.Radius);
+                }
+                else if (light.Type == 1) // Directional Light
+                {
+                    L = normalize(-light.Direction);
+                }
+                else if (light.Type == 2) // Spot Light
+                {
+                    float3 toLight = light.Position - input.worldPosition.xyz;
+                    float dist = length(toLight);
+                    L = normalize(toLight);
+                    float spotFactor = saturate(dot(-L, normalize(light.Direction)));
+                    float cone = cos(light.SpotAngle);
+                    if (spotFactor < cone)
+                        continue;
+                    float falloff = smoothstep(cone, 1.0, spotFactor);
+                    attenuation = falloff * saturate(1.0 - dist / light.Radius);
+                }
+
+            // 디퓨즈 조명
+                float NdotL = saturate(dot(N, L));
+                float3 diffuse = NdotL * light.Color.rgb * light.Intensity;
+
+            // 스페큘러 조명 (Blinn-Phong)
+                float3 H = normalize(L + V);
+                float spec = pow(saturate(dot(N, H)), Material.SpecularScalar * 32);
+                float3 specular = spec * Material.SpecularColor * light.Color.rgb * light.Intensity;
+
+            // 감쇠 적용
+                litDiffuse += diffuse * attenuation;
+                litSpecular += specular * attenuation;
+            }
+
+        // Ambient
             float3 ambient = Material.AmbientColor * AmbientFactor;
-            float3 diffuseLight = diffuse * LightColor;
-            float3 specularLight = specular * Material.SpecularColor * LightColor;
-            
-            color = ambient + (diffuseLight * color) + specularLight;
+
+        // 최종 조명 조합
+            color = ambient + (litDiffuse * color) + litSpecular;
         }
-        
-        // 투명도 적용
+
+    // 발광 색상 + 투명도
         color += Material.EmissiveColor;
         output.color = float4(color, Material.TransparencyScalar);
         return output;

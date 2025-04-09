@@ -7,6 +7,10 @@ UMeshComponent::UMeshComponent(const UMeshComponent& Other)
       OverrideMaterials(Other.OverrideMaterials)
 {
 }
+UMeshComponent::~UMeshComponent()
+{
+    OverrideMaterials.Empty();
+}
 UMaterial* UMeshComponent::GetMaterial(uint32 ElementIndex) const
 {
     if (OverrideMaterials.IsValidIndex(ElementIndex))

@@ -11,7 +11,7 @@
 #include "RenderResourceManager.h"
 #include "ShaderManager.h"
 #include "ConstantBufferUpdater.h"
-
+class FStructuredBuffer;
 class ULightComponentBase;
 class UWorld;
 class FGraphicsDevice;
@@ -148,20 +148,22 @@ public:
     ID3D11InputLayout* QuadInputLayout = nullptr;
     ID3D11Buffer* QuadVertexBuffer = nullptr;
     ID3D11SamplerState* LinearSampler = nullptr;
+    ID3D11Buffer* ViewportParamsConstantBuffer = nullptr;
+    ID3D11Buffer* CameraNearFarConstantBuffer = nullptr;
 
     ID3D11PixelShader* FogPS = nullptr;
 
 private:
     void CreateDepthVisualizationResources();
     void ReleaseDepthVisualizationResources();
-    void PrepareDepthVisualization();
-    void RenderDepthVisualization();
+    void PrepareDepthVisualization(std::shared_ptr<FEditorViewportClient> ActiveViewport);
+    void RenderDepthVisualization(std::shared_ptr<FEditorViewportClient> ActiveViewport);
 
     void CreateFogResources();
     void ReleaseFogResources();
-    void PrepareFogVisualization();
-    void PrepareFogConstant();
-    void RenderFogVisualization();
+    void PrepareFogVisualization(std::shared_ptr<FEditorViewportClient> ActiveViewport);
+    void PrepareFogConstant(std::shared_ptr<FEditorViewportClient> ActiveViewport);
+    void RenderFogVisualization(std::shared_ptr<FEditorViewportClient> ActiveViewport);
 
 public:
     FRenderResourceManager& GetResourceManager() { return RenderResourceManager; }
@@ -172,5 +174,10 @@ private:
     FRenderResourceManager RenderResourceManager;
     FShaderManager ShaderManager;
     FConstantBufferUpdater ConstantBufferUpdater;
+private:
+    FStructuredBuffer* MultiLightStructured;
+    ID3D11Buffer* LightCountBuffer;
+    ID3D11Buffer* ModelBuffer;
+    void UpdateMultiLight();
 };
 

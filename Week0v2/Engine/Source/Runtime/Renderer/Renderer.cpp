@@ -20,9 +20,9 @@
 #include "PropertyEditor/ShowFlags.h"
 #include "UObject/UObjectIterator.h"
 #include "Components/SkySphereComponent.h"
+#include "StructuredBuffer.h"
 #include "Runtime/Launch/Define.h"
 #include "LevelEditor/SLevelEditor.h"
-
 
 void FRenderer::Initialize(FGraphicsDevice* graphics)
 {
@@ -30,19 +30,24 @@ void FRenderer::Initialize(FGraphicsDevice* graphics)
     RenderResourceManager.Initialize(Graphics->Device);
     ShaderManager.Initialize(Graphics->Device, Graphics->DeviceContext);
     ConstantBufferUpdater.Initialize(Graphics->DeviceContext);
-
+    
     CreateShader();
     CreateConstantBuffer();
     CreateDepthVisualizationResources(); // 깊이 시각화 리소스 생성
     CreateFogResources();
     ConstantBufferUpdater.UpdateLitUnlitConstant(FlagBuffer, 1);
 
+    MultiLightStructured = new FStructuredBuffer();
+    MultiLightStructured->Create(Graphics->Device, sizeof(FLightConstants), MAX_MULTILIGHT, false, true, nullptr);
 }
 
 void FRenderer::Release()
 {
     ReleaseShader();
     ReleaseConstantBuffer();
+
+    MultiLightStructured->Release();
+    delete MultiLightStructured;
     ReleaseDepthVisualizationResources(); // 깊이 시각화 리소스 해제
     ReleaseFogResources();
 }
@@ -125,6 +130,8 @@ void FRenderer::PrepareShader() const
         Graphics->DeviceContext->PSSetConstantBuffers(4, 1, &SubMeshConstantBuffer);
         // 텍스처 Cbuffer  b5 slot 바인딩.
         Graphics->DeviceContext->PSSetConstantBuffers(5, 1, &TextureConstantBufer);
+        Graphics->DeviceContext->PSSetConstantBuffers(6, 1, &LightCountBuffer);
+        MultiLightStructured->BindSRV(Graphics->DeviceContext, 5, SHADER_STAGE_PIXEL);
     }
 }
 
@@ -181,6 +188,10 @@ void FRenderer::CreateConstantBuffer()
     TextureConstantBufer = RenderResourceManager.CreateConstantBuffer(sizeof(FTextureConstants));
     LightingBuffer = RenderResourceManager.CreateConstantBuffer(sizeof(FLighting));
     FlagBuffer = RenderResourceManager.CreateConstantBuffer(sizeof(FLitUnlitConstants));
+    LightCountBuffer = RenderResourceManager.CreateConstantBuffer(sizeof(int32));
+    ModelBuffer = RenderResourceManager.CreateConstantBuffer(sizeof(FMatrix));
+    ViewportParamsConstantBuffer = RenderResourceManager.CreateConstantBuffer(sizeof(FViewportParamsConstant));  
+    CameraNearFarConstantBuffer = RenderResourceManager.CreateConstantBuffer(sizeof(FCameraNearFarConstant));
     FogConstantBuffer = RenderResourceManager.CreateConstantBuffer(sizeof(FFogConstants));
 }
 
@@ -195,6 +206,8 @@ void FRenderer::ReleaseConstantBuffer()
     RenderResourceManager.ReleaseBuffer(TextureConstantBufer);
     RenderResourceManager.ReleaseBuffer(LightingBuffer);
     RenderResourceManager.ReleaseBuffer(FlagBuffer);
+    RenderResourceManager.ReleaseBuffer(LightCountBuffer);
+    RenderResourceManager.ReleaseBuffer(ModelBuffer);
     RenderResourceManager.ReleaseBuffer(FogConstantBuffer);
 }
 #pragma endregion ConstantBuffer
@@ -270,26 +283,48 @@ void FRenderer::Render(UWorld* World, std::shared_ptr<FEditorViewportClient> Act
     Graphics->ChangeRasterizer(ActiveViewport->GetViewMode());
     ChangeViewMode(ActiveViewport->GetViewMode());
     ConstantBufferUpdater.UpdateLightConstant(LightingBuffer);
+    UpdateMultiLight();
+
+    Graphics->DeviceContext->OMSetRenderTargets(RTV_NUM, Graphics->RTVs, Graphics->DepthStencilView);
+
+    Graphics->SetDefaultSetting(ActiveViewport);
     UPrimitiveBatch::GetInstance().RenderBatch(ConstantBuffer, ActiveViewport->GetViewMatrix(), ActiveViewport->GetProjectionMatrix());
 
     
-    
-
-    if (ActiveViewport->GetShowFlag() & static_cast<uint64>(EEngineShowFlags::SF_Primitives))
+    if (ActiveViewport->GetShowFlag() & static_cast<uint64>(EEngineShowFlags::SF_Primitives)) 
+    {
+        Graphics->SetDefaultSetting(ActiveViewport);
         RenderStaticMeshes(World, ActiveViewport);
-    RenderGizmos(World, ActiveViewport);
-    if (ActiveViewport->GetShowFlag() & static_cast<uint64>(EEngineShowFlags::SF_BillboardText))
+    }
+
+    if (ActiveViewport->GetShowFlag() & static_cast<uint64>(EEngineShowFlags::SF_BillboardText)) 
+    {
+        Graphics->SetDefaultSetting(ActiveViewport);
         RenderBillboards(World, ActiveViewport);
-    RenderLight(World, ActiveViewport);
+    }
+        
+    //RenderLight(World, ActiveViewport);
 
     if (ActiveViewport->GetViewMode() == EViewModeIndex::VMI_Depth)
     {
-        RenderDepthVisualization();
+        Graphics->SetDefaultSetting(ActiveViewport);
+        RenderDepthVisualization(ActiveViewport);
+    }
+    else {
+        // DepthVisualization 하는 경우에는 Fog 제거
+        Graphics->SetDefaultSetting(ActiveViewport);
+        RenderFogVisualization(ActiveViewport);
     }
 
-    RenderFogVisualization();
-    
+    ID3D11DepthStencilState* originalDepthState = Graphics->DepthStencilState;
+    Graphics->DeviceContext->OMSetDepthStencilState(originalDepthState, 0);
+
+    // Gizmo의 경우 FrameBuffer에 바로 Render해주어야함
+    // 다른 PostProcess의 영향도 안 받을 오브젝트이면서도
+    // 맨 마지막에 그려지기 때문에
+    RenderGizmos(World, ActiveViewport);
     ClearRenderArr();
+
 }
 
 void FRenderer::RenderPrimitive(ID3D11Buffer* pBuffer, UINT numVertices) const
@@ -418,6 +453,7 @@ void FRenderer::RenderStaticMeshes(UWorld* World, std::shared_ptr<FEditorViewpor
         // 노말 회전시 필요 행렬
         FMatrix NormalMatrix = FMatrix::Transpose(FMatrix::Inverse(Model));
         FVector4 UUIDColor = StaticMeshComp->EncodeUUID() / 255.0f;
+        ConstantBufferUpdater.UpdateModelConstant(ModelBuffer, Model);
         if (World->GetSelectedActor() == StaticMeshComp->GetOwner())
         {
             ConstantBufferUpdater.UpdateConstant(ConstantBuffer, Model, MVP, NormalMatrix, UUIDColor, true);
@@ -459,6 +495,8 @@ void FRenderer::RenderGizmos(const UWorld* World, const std::shared_ptr<FEditorV
     {
         return;
     }
+
+    PrepareShader();
 
 #pragma region GizmoDepth
     ID3D11DepthStencilState* DepthStateDisable = Graphics->DepthStateDisable;
@@ -738,7 +776,7 @@ void FRenderer::ReleaseFogResources()
     }
 }
 
-void FRenderer::PrepareFogVisualization()
+void FRenderer::PrepareFogVisualization(std::shared_ptr<FEditorViewportClient> ActiveViewport)
 {
     UINT Stride = sizeof(FVertexTexture);
     UINT Offset = 0;
@@ -762,12 +800,28 @@ void FRenderer::PrepareFogVisualization()
     Graphics->DeviceContext->OMSetBlendState(nullptr, nullptr, 0xFFFFFFFF);
 }
 
-void FRenderer::PrepareFogConstant()
+void FRenderer::PrepareFogConstant(std::shared_ptr<FEditorViewportClient> ActiveViewport)
 {
+    // Viewport 업데이트
+    float TotalWidth = Graphics->screenWidth;
+    float TotalHeight = Graphics->screenHeight;
+    
+    FViewportParamsConstant ViewportParamsConstant;
+    ViewportParamsConstant.ViewportScale.x = ActiveViewport->GetD3DViewport().Width / TotalWidth;
+    ViewportParamsConstant.ViewportScale.y = ActiveViewport->GetD3DViewport().Height / TotalHeight;
+
+    ViewportParamsConstant.ViewportOffset.x = ActiveViewport->GetD3DViewport().TopLeftX / TotalWidth;
+    ViewportParamsConstant.ViewportOffset.y = ActiveViewport->GetD3DViewport().TopLeftY / TotalHeight;
+
+    ConstantBufferUpdater.UpdateViewportParamsConstant(ViewportParamsConstantBuffer, ViewportParamsConstant);
+
     Graphics->DeviceContext->PSSetConstantBuffers(0, 1, &FogConstantBuffer);
+    Graphics->DeviceContext->PSSetConstantBuffers(1, 1, &ViewportParamsConstantBuffer);
+
+    Graphics->DeviceContext->OMSetDepthStencilState(Graphics->DepthStateDisable, 1);
 }
 
-void FRenderer::RenderFogVisualization()
+void FRenderer::RenderFogVisualization(std::shared_ptr<FEditorViewportClient> ActiveViewport)
 {
     TArray<UFogComponent*> Fogs = GEngine->renderer.FogObjs;
    for (auto fog : Fogs) {
@@ -781,11 +835,11 @@ void FRenderer::RenderFogVisualization()
         }
    }
     
-    PrepareFogVisualization();
-    PrepareFogConstant();
+    PrepareFogVisualization(ActiveViewport);
+    PrepareFogConstant(ActiveViewport);
     Graphics->DeviceContext->Draw(4, 0);
 
-    ID3D11ShaderResourceView* nullSRV[1] = { nullptr };
+    
     // FIXME : 사용 slot 확인후 해제해주기
     //Graphics -> DeviceContext -> PSSetShaderResources(0, 1, )
     // TODO : 빼도되는지 확인하기
@@ -794,6 +848,10 @@ void FRenderer::RenderFogVisualization()
     // 만약 FrameBufferRTV를 사용하지 않으면, ImGUI가 이상한 곳에 그리게 된다.
     // SwapChain의 BackBuffer가 아닌 곳에 그리게 되기에 ImGUI가 그려지지 않음
     Graphics->DeviceContext->OMSetRenderTargets(1, &Graphics->FrameBufferRTV, nullptr);
+
+    // 사용한 SRV 
+    ID3D11ShaderResourceView* nullSRV[1] = { nullptr };
+    Graphics->DeviceContext->PSSetShaderResources(0, 1, nullSRV);
 
 }
 
@@ -826,7 +884,7 @@ void FRenderer::ReleaseDepthVisualizationResources()
     }
 }
 
-void FRenderer::PrepareDepthVisualization()
+void FRenderer::PrepareDepthVisualization(std::shared_ptr<FEditorViewportClient> ActiveViewport)
 {
     // 1. Render Target 설정 (GraphicsDevice에 함수를 만들어서 호출)
     Graphics->DeviceContext->OMSetRenderTargets(1, &Graphics->FrameBufferRTV, nullptr);
@@ -846,14 +904,39 @@ void FRenderer::PrepareDepthVisualization()
     Graphics->DeviceContext->PSSetSamplers(0, 1, &LinearSampler);
     Graphics->DeviceContext->PSSetShaderResources(0, 1, &(Graphics->DepthSRV));
 
+    if (CameraNearFarConstantBuffer && ViewportParamsConstantBuffer)
+    {
+        FCameraNearFarConstant CameraNearFarConstant;
+        CameraNearFarConstant.NearPlane = ActiveViewport->GetNearClip();
+        CameraNearFarConstant.FarPlane = ActiveViewport->GetFarClip();
+        // 카메라 Near/Far 값 업데이트
+        ConstantBufferUpdater.UpdateCameraNearFarConstant(CameraNearFarConstantBuffer, CameraNearFarConstant);
+
+        float TotalWidth = Graphics->screenWidth;
+        float TotalHeight = Graphics->screenHeight;
+
+        FViewportParamsConstant ViewportParamsConstant;
+        ViewportParamsConstant.ViewportScale.x = ActiveViewport->GetD3DViewport().Width / TotalWidth;
+        ViewportParamsConstant.ViewportScale.y = ActiveViewport->GetD3DViewport().Height / TotalHeight;
+
+        ViewportParamsConstant.ViewportOffset.x = ActiveViewport->GetD3DViewport().TopLeftX / TotalWidth;
+        ViewportParamsConstant.ViewportOffset.y = ActiveViewport->GetD3DViewport().TopLeftY / TotalHeight;
+
+        // 뷰포트 파라미터 업데이트
+        ConstantBufferUpdater.UpdateViewportParamsConstant(ViewportParamsConstantBuffer, ViewportParamsConstant);
+
+        Graphics->DeviceContext->PSSetConstantBuffers(0, 1, &CameraNearFarConstantBuffer);
+        Graphics->DeviceContext->PSSetConstantBuffers(1, 1, &ViewportParamsConstantBuffer);
+    }
+
     // 5. 상태 설정
     Graphics->DeviceContext->OMSetDepthStencilState(Graphics->DepthStateDisable, 1);
     Graphics->DeviceContext->OMSetBlendState(nullptr, nullptr, 0xFFFFFFFF);
 }
 
-void FRenderer::RenderDepthVisualization()
+void FRenderer::RenderDepthVisualization(std::shared_ptr<FEditorViewportClient> ActiveViewport)
 {
-    PrepareDepthVisualization();
+    PrepareDepthVisualization(ActiveViewport);
     
     // 렌더링
     Graphics->DeviceContext->Draw(4, 0);
@@ -861,7 +944,6 @@ void FRenderer::RenderDepthVisualization()
     // 사용한 SRV 
     ID3D11ShaderResourceView* nullSRV[1] = { nullptr };
     Graphics->DeviceContext->PSSetShaderResources(0, 1, nullSRV);
-    Graphics->DeviceContext->OMSetRenderTargets(2, Graphics->RTVs, Graphics->DepthStencilView);
 
 }
 
@@ -1032,4 +1114,18 @@ void FRenderer::UpdateLinePrimitveCountBuffer(int numBoundingBoxes, int numCones
     pData->BoundingBoxCount = numBoundingBoxes;
     pData->ConeCount = numCones;
     Graphics->DeviceContext->Unmap(LinePrimitiveBuffer, 0);
+}
+
+void FRenderer::UpdateMultiLight()
+{
+    TArray<FLightConstants> lightConstants;
+    for (auto Light : LightObjs)
+    {
+        FLightConstants lightConstant;
+        Light->FillLightConstant(lightConstant);
+        lightConstants.Add(lightConstant);
+    }
+    MultiLightStructured->Update(Graphics->DeviceContext, lightConstants.GetData(), 
+        sizeof(FLightConstants) * lightConstants.Num());
+    ConstantBufferUpdater.UpdateLightCountConstant(LightCountBuffer, lightConstants.Num());
 }

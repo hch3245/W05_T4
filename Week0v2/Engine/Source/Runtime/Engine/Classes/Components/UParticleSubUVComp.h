@@ -8,11 +8,16 @@ class UParticleSubUVComp : public UBillboardComponent
 public:
     UParticleSubUVComp();
     virtual ~UParticleSubUVComp() override;
+    UParticleSubUVComp(const UParticleSubUVComp& other);
 
     virtual void InitializeComponent() override;
     virtual void TickComponent(float DeltaTime) override;
 
     void SetRowColumnCount(int _cellsPerRow, int _cellsPerColumn);
+
+    virtual UObject* Duplicate() const override;
+    virtual void DuplicateSubObjects(const UObject* Source) override;
+    virtual void PostDuplicate() override;
 
     ID3D11Buffer* vertexSubUVBuffer;
     UINT numTextVertices;

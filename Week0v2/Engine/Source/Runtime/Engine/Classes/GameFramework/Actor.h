@@ -148,6 +148,10 @@ T* AActor::AddComponent()
             NewSceneComp->SetupAttachment(RootComponent);
         }
     }
+    else if (UActorComponent* NewActorComp = Cast<UActorComponent>(Component))
+    {
+        OwnedComponents.Add(NewActorComp);
+    }
 
     // TODO: RegisterComponent() 생기면 제거
     Component->InitializeComponent();

@@ -194,9 +194,9 @@ FVector FMatrix::TransformVector(const FVector& v, const FMatrix& m)
     FVector result;
 
     // 4x4 행렬을 사용하여 벡터 변환 (W = 0으로 가정, 방향 벡터)
-    result.x = v.x * m.M[0][0] + v.y * m.M[1][0] + v.z * m.M[2][0] + 0.0f * m.M[3][0];
-    result.y = v.x * m.M[0][1] + v.y * m.M[1][1] + v.z * m.M[2][1] + 0.0f * m.M[3][1];
-    result.z = v.x * m.M[0][2] + v.y * m.M[1][2] + v.z * m.M[2][2] + 0.0f * m.M[3][2];
+    result.x = v.x * m.M[0][0] + v.y * m.M[1][0] + v.z * m.M[2][0] + 1.0f * m.M[3][0];
+    result.y = v.x * m.M[0][1] + v.y * m.M[1][1] + v.z * m.M[2][1] + 1.0f * m.M[3][1];
+    result.z = v.x * m.M[0][2] + v.y * m.M[1][2] + v.z * m.M[2][2] + 1.0f * m.M[3][2];
 
 
     return result;

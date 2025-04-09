@@ -17,7 +17,9 @@
 #include "PropertyEditor/ShowFlags.h"
 #include "UnrealEd/SceneMgr.h"
 #include "UEditorStateManager.h"
-
+#include "Components/FireBallComponent.h"
+#include "Components/RotationMovementComponent.h"
+#include "Components/ProjectileMovementComponent.h"
 void ControlEditorPanel::Render()
 {
     /* Pre Setup */
@@ -262,10 +264,11 @@ void ControlEditorPanel::CreateModifyButton(ImVec2 ButtonSize, ImFont* IconFont)
             { .label= "SpotLight", .obj= OBJ_SpotLight },
             { .label= "Particle",  .obj= OBJ_PARTICLE },
             { .label= "Text",      .obj= OBJ_Text },
+            { .label= "FireBall",  .obj= OBJ_FireBall },
             { .label= "SkySphere", .obj= OBJ_SKYSPHERE },
             {.label = "HeightFog", .obj = OBJ_HEIGHTFOG}
         };
-
+        
         for (const auto& primitive : primitives)
         {
             if (ImGui::Selectable(primitive.label))
@@ -319,6 +322,19 @@ void ControlEditorPanel::CreateModifyButton(ImVec2 ButtonSize, ImFont* IconFont)
                     TextComponent->SetTexture(L"Assets/Texture/font.png");
                     TextComponent->SetRowColumnCount(106, 106);
                     TextComponent->SetText(L"안녕하세요 Jungle 1");
+                    break;
+                }
+                case OBJ_FireBall:
+                {
+                    AStaticMeshActor* TempActor = World->SpawnActor<AStaticMeshActor>();
+                    TempActor->SetActorLabel(TEXT("OBJ_FireBall"));
+                    UStaticMeshComponent* MeshComp = TempActor->GetStaticMeshComponent();
+                    FManagerOBJ::CreateStaticMesh("Assets/FireBall.obj");
+                    MeshComp->SetStaticMesh(FManagerOBJ::GetStaticMesh(L"FireBall.obj"));
+                    UFireBallComponent* fire = TempActor->AddComponent<UFireBallComponent>();
+                    fire->SetColor(FVector4(1,0,0,1));
+                    TempActor->AddComponent<UProjectileMovementComponent>();
+                    TempActor->AddComponent<URotationMovementComponent>();
                     break;
                 }
                 case OBJ_TRIANGLE:

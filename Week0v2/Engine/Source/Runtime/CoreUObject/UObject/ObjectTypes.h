@@ -8,6 +8,7 @@ enum OBJECTS
 	OBJ_SpotLight,
 	OBJ_PARTICLE,
 	OBJ_Text,
+    OBJ_FireBall,
 	OBJ_TRIANGLE,
 	OBJ_CAMERA,
 	OBJ_PLAYER,

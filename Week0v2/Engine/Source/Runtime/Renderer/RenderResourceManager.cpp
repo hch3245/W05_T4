@@ -11,7 +11,7 @@ ID3D11Buffer* FRenderResourceManager::CreateConstantBuffer(UINT size)
     constantbufferdesc.Usage = D3D11_USAGE_DYNAMIC;
     constantbufferdesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
     constantbufferdesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-
+    
     ID3D11Buffer* buffer = nullptr;
     Device->CreateBuffer(&constantbufferdesc, nullptr, &buffer);
     return buffer;

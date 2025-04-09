@@ -283,6 +283,37 @@ struct FLighting
 	float pad5; // 16바이트 정렬 맞춤 추가 패딩
 };
 
+namespace Light
+{
+    enum Type
+    {
+        Point,
+        Directional,
+        Spot
+    };
+}
+
+struct FLightConstants
+{
+    FVector4 Color;
+    
+    FVector Position;
+    float Radius;
+
+    FVector Direction;
+    float SpotAngle;
+
+    float Intensity;
+    int32 Type;
+    float pad0;
+    float pad1;
+};
+
+#define MAX_MULTILIGHT 64
+#define SHADER_STAGE_VERTEX   (1 << 0)  // 0001
+#define SHADER_STAGE_PIXEL    (1 << 1)  // 0010
+#define SHADER_STAGE_COMPUTE  (1 << 2)  // 0100
+
 struct FMaterialConstants {
     FVector DiffuseColor;
     float TransparencyScalar;
@@ -324,6 +355,20 @@ struct FSubUVConstant
     float indexU;
     float indexV;
 };
+
+struct FCameraNearFarConstant
+{
+    float NearPlane;
+    float FarPlane;
+    float pad0;
+    float pad1;
+};
+ struct FViewportParamsConstant
+ {
+     FVector2D ViewportScale; // 뷰포트 크기
+     FVector2D ViewportOffset; // 뷰포트 오프셋
+ };
+
 
 struct alignas(16) FFogConstants {
     float FogDensity;                   // 안개 밀도

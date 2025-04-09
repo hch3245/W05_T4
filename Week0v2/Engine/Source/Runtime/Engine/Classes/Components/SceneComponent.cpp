@@ -124,6 +124,45 @@ FVector USceneComponent::GetWorldLocation()
 		return GetLocalLocation();
 }
 
+FMatrix USceneComponent::GetWorldTransform()
+{
+    if (AttachParent)
+    {
+        return AttachParent->GetWorldTransform() * GetLocalTransform();
+    }
+    else
+    {
+        return GetLocalTransform();
+    }
+}
+
+FQuat USceneComponent::GetWorldQuaternion()
+{
+    if (AttachParent)
+    {
+        return AttachParent->GetWorldQuaternion() * GetLocalQuaternion();
+    }
+    else
+    {
+        return GetLocalQuaternion();
+    }
+}
+
+FQuat USceneComponent::GetLocalQuaternion()
+{
+    return QuatRotation;
+}
+
+FMatrix USceneComponent::GetLocalTransform()
+{
+    FMatrix Translation = FMatrix::CreateTranslationMatrix(RelativeLocation);
+
+    FMatrix Rotation = FMatrix::CreateRotation(RelativeRotation.x, RelativeRotation.y, RelativeRotation.z);
+
+    FMatrix Scale = FMatrix::CreateScale(RelativeScale3D.x, RelativeScale3D.y, RelativeScale3D.z);
+    return Scale * Rotation * Translation;
+}
+
 FVector USceneComponent::GetLocalRotation()
 {
 	return JungleMath::QuaternionToEuler(QuatRotation);

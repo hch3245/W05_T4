@@ -37,6 +37,10 @@ public:
     virtual FVector GetWorldRotation();
     FVector GetWorldScale();
     FVector GetWorldLocation();
+    FMatrix GetWorldTransform();
+    FQuat GetWorldQuaternion();
+    FQuat GetLocalQuaternion();
+    FMatrix GetLocalTransform();
     FVector GetLocalRotation();
     FQuat GetQuat() const { return QuatRotation; }
 
