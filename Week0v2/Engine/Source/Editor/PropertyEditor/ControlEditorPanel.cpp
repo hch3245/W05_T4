@@ -269,7 +269,8 @@ void ControlEditorPanel::CreateModifyButton(ImVec2 ButtonSize, ImFont* IconFont)
             { .label= "Text",      .obj= OBJ_Text },
             { .label= "FireBall",  .obj= OBJ_FireBall },
             { .label= "SkySphere", .obj= OBJ_SKYSPHERE },
-            {.label = "HeightFog", .obj = OBJ_HEIGHTFOG}
+            {.label = "HeightFog", .obj = OBJ_HEIGHTFOG},
+            {.label = "Iceberg", .obj = OBJ_ICEBERG}
         };
         
         for (const auto& primitive : primitives)
@@ -352,6 +353,7 @@ void ControlEditorPanel::CreateModifyButton(ImVec2 ButtonSize, ImFont* IconFont)
                         World->SetPickedActor(SpawnedActor);
                         World->SetPickedComponent(SpawnedActor->GetRootComponent());
                         USkySphereComponent* SkySphereComponent = SpawnedActor->AddComponent<USkySphereComponent>();
+                        SkySphereComponent->SetRotation(FVector(-90.0f, 0.0f, 0.0f));
                         FManagerOBJ::CreateStaticMesh("Assets/SkySphere.obj");
                         SkySphereComponent->SetStaticMesh(FManagerOBJ::GetStaticMesh(L"SkySphere.obj"));
                     }
@@ -367,6 +369,16 @@ void ControlEditorPanel::CreateModifyButton(ImVec2 ButtonSize, ImFont* IconFont)
                         UFogComponent* FogComponent = SpawnedActor->AddComponent<UFogComponent>();
                         FogComponent->CreateScreenQuadVertexBuffer();
                     }
+                    break;
+                }
+                case OBJ_ICEBERG:
+                {
+                    AStaticMeshActor* TempActor = World->SpawnActor<AStaticMeshActor>();
+                    TempActor->SetActorLabel(TEXT("OBJ_ICEBERG"));
+                    UStaticMeshComponent* MeshComp = TempActor->GetStaticMeshComponent();
+                    FManagerOBJ::CreateStaticMesh("Assets/Iceberg.obj");
+                    MeshComp->SetStaticMesh(FManagerOBJ::GetStaticMesh(L"Iceberg.obj"));
+                    break;
                 }
                 case OBJ_END:
                     break;

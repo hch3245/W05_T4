@@ -7,7 +7,8 @@
 #include "UObject/ObjectFactory.h"
 #include "UObject/ObjectMacros.h"
 #include "Runtime/Engine/Classes/Components/PostProcessing/FogComponent.h"
-
+#include "Runtime/Engine/Classes/Components/SkySphereComponent.h"
+#include "Runtime/Engine/Classes/GameFramework/Actor.h"
 class FObjectFactory;
 class AActor;
 class UObject;
@@ -68,6 +69,7 @@ public:
     AActor* GetSelectedActor() const { return SelectedActor; }
     void SetPickedActor(AActor* InActor)
     {
+        
         SelectedActor = InActor;
     }
 
